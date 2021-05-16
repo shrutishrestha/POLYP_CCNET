@@ -127,3 +127,22 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+
+dataset/Kvasir-SEG
+dataset/list
+dataset/__pycache__
+dataset/predicted_masks
+dataset/resnet101-imagenet.pth
+dataset/__init__.py
+dataset/scratch
+.idea
+LICENSE
+snapshots
+__pycache__/
+scratch.py
+.vscode/
+get-pip.py
+loss/__pycache__
+networks/__pycache__/
+output

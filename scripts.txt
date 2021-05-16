@@ -1,0 +1,12 @@
+python train_dsn_approach_notrans.py --power 0.9 --train-batch-size 1 --test-batch-size 1 --momentum 0.9 --num-classes 1 --ignore-label 1 --num-steps 100000 --random-seed 12345 --learning-rate 1e-2 --weight-decay 0.0005 --input-size 769,769 --snapshot-dir /media/HDD1/Shruti/snapshots/769th --train-data-path /media/HDD1/Shruti/dataset/Kvasir-SEG/trainset --test-data-path /media/HDD1/Shruti/dataset/Kvasir-SEG/valset --restore-from /home/shrutisth/PycharmProjects/HDD1/CCNet-Pure-Pytorch/dataset/resnet101-imagenet.pth --start-iters 0 --gpu 0,1 --model ccnet --recurrence 2 --random-mirror --random-scale --result-file-path /media/HDD1/Shruti/result.csv 
+
+
+python train_dsn_approach_notrans.py --power 0.9 --train-batch-size 1 --test-batch-size 1 --momentum 0.9 --num-classes 1 --ignore-label 1 --num-steps 120000 --random-seed 12345 --learning-rate 1e-2 --weight-decay 0.0005 --input-size 769,769 --snapshot-dir /media/HDD1/Shruti/snapshots/769_3 --train-data-path /media/HDD1/Shruti/dataset/Kvasir-SEG/trainset --test-data-path /media/HDD1/Shruti/dataset/Kvasir-SEG/valset --restore-from /home/shrutisth/PycharmProjects/HDD1/CCNet-Pure-Pytorch/dataset/resnet101-imagenet.pth --start-iters 0 --gpu 0,1 --model ccnet --recurrence 2 --random-mirror --random-scale --result-file-path /media/HDD1/Shruti/result.csv —tensorboard-output /media/HDD1/Shruti/tensorboard/runs/769_3
+
+
+#github
+ssh-keygen -t ed25519 -C “shruti.shresthaa@gmail.com”
+
+#for mapping remote to local dir
+sudo sshfs -o reconnect,allow_other,default_permissions shrutisth@124.41.198.88:/media/HDD1/Shruti/tensorboard/runs/769_2 /Users/shruti/PycharmProjects/NAAMII/tensorboard/runs
+
