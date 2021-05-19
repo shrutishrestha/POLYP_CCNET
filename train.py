@@ -14,6 +14,7 @@ from metric import calculate_metrics
 import numpy as np
 from utils.image_utils import get_train_merged_image
 from metric import get_confusion_matrix
+from torch.utils.tensorboard import SummaryWriter
 
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -29,7 +30,7 @@ def lr_poly(base_lr, iter, max_iter, power):
     return base_lr * ((1 - float(iter) / max_iter) ** (power))
     
 
-def train_method(epoch, args, criterion, engine, global_iteration, model, optimizer, train_loader, train_sampler):
+def train_method(epoch, args, criterion, engine, global_iteration, model, optimizer, train_loader, train_sampler, summary_writer):
     model.train()
     if engine.distributed:
         train_sampler.set_epoch(epoch)
@@ -80,13 +81,15 @@ def train_method(epoch, args, criterion, engine, global_iteration, model, optimi
         print_str = ' Iter{}/{}:'.format(idx + 1, len(
             train_loader)) + ' lr=%.2e' % lr + ' loss=%.2f' % reduce_loss.item()
         
-        train_pbar.set_description(print_str, refresh=False)
-        torch.cuda.empty_cache()
 
         merged_image = get_train_merged_image(train_images[0], train_labels[0], ccnet_out[0])
 
         if idx==100 or idx == 500:
             summary_writer.add_image(tag="train_"+name[0], img_tensor = merged_image, global_step=epoch)
+        
+        train_pbar.set_description(print_str, refresh=False)
+        torch.cuda.empty_cache()
+
         
     tn_train_ccnet, fp_train_ccnet, fn_train_ccnet, tp_train_ccnet, meanIU_train_ccnet, dice_train_ccnet, prec_ccnet, recall_ccnet = calculate_metrics(confusion_matrix_ccnet)
     tn_train_dsn, fp_train_dsn, fn_train_dsn, tp_train_dsn, meanIU_train_dsn, dice_train_dsn, prec_dsn, recall_dsn = calculate_metrics(confusion_matrix_xdsn)
