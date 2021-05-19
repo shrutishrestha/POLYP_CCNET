@@ -91,6 +91,8 @@ def get_parser(config):
                         help="Whether to not restore last (FC) layers.")
     parser.add_argument("--result-file-path", type=str, default=config['training']['result-file-path'],
                         help="path to store loss values")
+    parser.add_argument("--result-dir", type=str, default=config['training']['result-dir'],
+                        help="folder path")
     parser.add_argument("--num-workers", type=int, default=config['training']['num-workers'],
                         help="choose the number of workers.")
     parser.add_argument("--val-images-saving-path", type=str, default=config['evaluation']['val-images-saving-path'],
@@ -171,7 +173,7 @@ def main(config):
         model = torch.nn.DataParallel(seg_model)
 
         # check and making directories
-        check_and_make_directories([args.snapshot_dir])
+        check_and_make_directories([args.snapshot_dir, args.result_dir])
         check_and_make_files([args.result_file_path], result_file=True)
         check_and_make_files([args.current_checkpoint_fpath, args.best_checkpoint_fpath])
 
@@ -198,7 +200,8 @@ def main(config):
                 model = model,
                 optimizer = optimizer,
                 train_loader = train_loader,
-                train_sampler = train_sampler
+                train_sampler = train_sampler,
+                summary_writer = summary_writer
             )
 
             torch.save(seg_model.state_dict(), args.current_checkpoint_fpath)
@@ -208,8 +211,9 @@ def main(config):
                 args = args, 
                 model = model, 
                 test_loader = test_loader,
-                criterion = criterion
-            )
+                criterion = criterion,
+                summary_writer = summary_writer
+                )    
 
             if val_metric["dice"] > best_val_metric:
                 best_val_metric = val_metric["dice"]
