@@ -8,6 +8,7 @@ from .loss import OhemCrossEntropy2d
 from .lovasz_losses import lovasz_softmax
 import scipy.ndimage as nd
 
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 class CriterionDSN(nn.Module):
     '''
     DSN : We need to consider two supervision for the model.
@@ -61,8 +62,10 @@ class CriterionOhemDSN(nn.Module):
 
             total_loss = loss1 + loss2*0.4
         else:
-            preds = torch.from_numpy(preds)
-            
+
+            preds = torch.from_numpy(preds).float().to(device)
+            target = target.to(device)
+
             scale_pred = F.interpolate(input=preds, size=(h, w), mode='bilinear', align_corners=True)
             total_loss = self.criterion1(scale_pred, target)
 
