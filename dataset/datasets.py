@@ -101,12 +101,14 @@ class KvasirSegDataSet(data.Dataset):
                 flip = np.random.choice(2) * 2 - 1
                 image = image[:, :, ::flip]
                 label = label[:, ::flip]
+
+
         else:
             image = np.asarray(image, np.float32)
             label = np.asarray(label, np.float32)
             image = image.transpose((2, 0, 1))
 
-        
+
         return image.copy(), label.copy(), np.array(size), name
 
 
