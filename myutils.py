@@ -5,8 +5,6 @@ import csv
 def check_and_make_files(filepath, result_file = False):
     if result_file:
         for file in filepath:
-            if os.stat(file).st_size == 0:
-                print("empty")
             if not os.path.exists(file) or os.stat(file).st_size == 0:
                 with open(file, 'w') as csvfile:
                     csvwriter = csv.writer(csvfile)
