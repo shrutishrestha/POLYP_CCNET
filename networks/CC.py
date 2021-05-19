@@ -2,9 +2,9 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from torch.nn import Softmax
-print("CC Moudle")
+
 def INF(B,H,W):
-     return -torch.diag(torch.tensor(float("inf")).repeat(H),0).unsqueeze(0).repeat(B*W,1,1)
+     return -torch.diag(torch.tensor(float("inf")).cuda().repeat(H),0).unsqueeze(0).repeat(B*W,1,1)
 class CC_module(nn.Module):
     def __init__(self,in_dim):
         super(CC_module, self).__init__()
@@ -41,7 +41,6 @@ class CC_module(nn.Module):
         out_W = torch.bmm(proj_value_W, att_W.permute(0, 2, 1)).view(m_batchsize,height,-1,width).permute(0,2,1,3) #[2, 64, 5, 6]
         #print(out_H.size(),out_W.size())
         return self.gamma*(out_H + out_W) + x
-
 
 
 if __name__ == '__main__':
