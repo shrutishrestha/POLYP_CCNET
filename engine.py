@@ -81,7 +81,6 @@ class Engine(object):
         train_sampler = None
         is_shuffle = True
         batch_size = self.args.train_batch_size
-        print("train batch size", batch_size)
 
         if self.distributed:
             train_sampler = torch.utils.data.distributed.DistributedSampler(
