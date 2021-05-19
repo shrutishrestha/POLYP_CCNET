@@ -122,7 +122,7 @@ def save_image(output_path, name, scaled_pred_mask,val_label, metric,data_path):
 
 def get_val_merged_image(label, pred_mask):
 
-    label = label.cpu().numpy()
+    # label = label.cpu().numpy()
     label_copy = label.copy()
     label_copy[label == 1] = 255
     label_copy = np.asarray(label_copy, np.uint8)
@@ -131,12 +131,13 @@ def get_val_merged_image(label, pred_mask):
         label = Image.fromarray(np.squeeze(label_copy, axis=0))
     else:
         label = Image.fromarray(label_copy)
-    
+    pred_mask = torch.from_numpy(pred_mask)
     pred_mask = (pred_mask>0).float()
     pred_mask = pred_mask.cpu().detach().numpy()
     pred_mask_copy = pred_mask.copy()
     pred_mask_copy[pred_mask == 1] =255
-    pred_mask = Image.fromarray(np.squeeze(pred_mask_copy,axis=0)) 
+
+    pred_mask = Image.fromarray(np.squeeze(pred_mask_copy, axis=0))
 
     total_width = label.size[0] + 10+pred_mask.size[0]
     max_height = max(label.size[1], pred_mask.size[1])
