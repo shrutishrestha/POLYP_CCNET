@@ -65,9 +65,11 @@ def predict_sliding(net, image, tile_size, classes, recurrence):
     interp = nn.Upsample(size=tile_size, mode='bilinear', align_corners=True) #
     image_size = image.shape #(1, 3, 1024, 2048)
 
+
     overlap = 1/3
 
-    stride = ceil(tile_size[0] * (1 - overlap)) #683 354
+    tile0= tile_size[0].float()
+    stride = ceil(tile0 * (1 - overlap)) #683 354
 
     tile_rows = int(ceil((image_size[2] - tile_size[0]) / stride) + 1)  # strided convolution formula 1
 
@@ -98,10 +100,8 @@ def predict_sliding(net, image, tile_size, classes, recurrence):
             # print("Predicting tile %i" % tile_counter)
             padded_prediction = net(torch.from_numpy(padded_img)) #eeee list 2
 
-
             if isinstance(padded_prediction, list):
                 padded_prediction = padded_prediction[0] #torch.Size([1, 2, 129, 257])
-
 
             padded_prediction = interp(padded_prediction).cpu().numpy().transpose(0,2,3,1) #(1, 1024, 2048, 2)
 
@@ -109,6 +109,7 @@ def predict_sliding(net, image, tile_size, classes, recurrence):
             count_predictions[0, y1:y2, x1:x2] += 1 #(1, 1024, 2048, 2)
 
             full_probs[:, y1:y2, x1:x2] += prediction  # accumulate the predictions also in the overlapping regions (1, 1024, 2048, 2)
+
 
     # average the predictions in the overlapping regions
     full_probs /= count_predictions #(1, 1024, 2048, 2)
@@ -135,12 +136,16 @@ def predict_multiscale(net, image, tile_size, scales, classes, flip_evaluation, 
         for the input of larger size, we would choose the cropping method to ensure that GPU memory is enough.
     """
     image = image.data #[1, 3, 1024, 2048]
+
     N_, C_, H_, W_ = image.shape #1 3 1024 2048
     full_probs = np.zeros((N_, H_, W_, classes))  #(1, 1024, 2048, 2)
 
+
     for scale in scales:
         scale = float(scale) #1.0
+
         scale_image = ndimage.zoom(image, (1.0, 1.0, scale, scale), order=1, prefilter=False) #(1, 530, 621, 3)
+
         scaled_probs = predict_sliding(net, scale_image, tile_size, classes, recurrence) #(1, 530, 621, 2)
 
         full_probs += scaled_probs #(1, 530, 621, 2)
@@ -150,7 +155,7 @@ def predict_multiscale(net, image, tile_size, scales, classes, flip_evaluation, 
     return full_probs
 
 
-def validation_method(epoch,args, model, test_loader, criterion):
+def validation_method(epoch, args, model, test_loader, criterion, summary_writer):
     """Create the model and start the evaluation process."""
     model.eval()
 
@@ -166,7 +171,9 @@ def validation_method(epoch,args, model, test_loader, criterion):
     dataloader = iter(test_loader)
     val_loss_sum = 0
     for idx in pbar:
+
         image, label, size, name = dataloader.next() #[1, 3, 1024, 2048] #[1, 1024, 2048]
+
 
         size = (size[0][0],size[0][1])
 
@@ -174,25 +181,33 @@ def validation_method(epoch,args, model, test_loader, criterion):
             output = predict_multiscale(net = model, image = image, tile_size = size, scales = [1.0], classes = args.num_classes, flip_evaluation = False, recurrence = 0) #(1, 530, 621, 2)
         
         output = output.transpose(0,3,1,2)
+
         loss = criterion(preds=output, target=label)
         reduce_loss = loss.data
         val_loss_sum += reduce_loss.item()
 
         #metric
-        seg_pred = np.asarray(np.argmax(output, axis=1), dtype=np.uint8) #(1, 1024, 2048)
-        seg_gt = np.asarray(label.numpy()[:,:size[0],:size[1]], dtype=np.int) #(1, 530, 621)
+        pred = np.asarray(np.argmax(output, axis=1), dtype=np.uint8) #(1, 1024, 2048)
+        gt = np.asarray(label.numpy()[:,:size[0],:size[1]], dtype=np.int) #(1, 530, 621)
     
-        ignore_index = seg_gt != 255
+        ignore_index = gt != 255
 
-        seg_gt = seg_gt[ignore_index]
+        seg_gt = gt[ignore_index]
 
-        seg_pred = seg_pred[ignore_index] #seg_pred (1, 530, 621) seg_gt (1, 530, 621)
+        seg_pred = pred[ignore_index] #seg_pred (1, 530, 621) seg_gt (1, 530, 621)
 
         confusion_matrix += get_confusion_matrix(seg_gt, seg_pred, args.num_classes)
 
+
         print_str = ' Iter{}/{}'.format(idx + 1, len(test_loader))
-        
+
+        merged_image = get_val_merged_image(gt, pred)
+
+        if idx==10 or idx==50:
+            summary_writer.add_image(tag="eval_"+name[0], img_tensor = merged_image, global_step=epoch)
+
     #for metric
+
     tn, fp, fn, tp, meanIU, dice, prec, recall = calculate_metrics(confusion_matrix)
     val_loss = round(val_loss_sum / len(test_loader), 6)
 
@@ -204,6 +219,7 @@ def validation_method(epoch,args, model, test_loader, criterion):
                     "dice" : dice,
                     "precision": prec,
                     "recall": recall}
+
 
     return val_loss, val_metric
     
