@@ -24,12 +24,12 @@
         "max-epochs": 200,
         "num-workers": 8,
         "result-dir": "/media/HDD1/Shruti/POLYP_CCNET/training_results",
-        "result-file-path": "/media/HDD1/Shruti/POLYP_CCNET/training_results/baseline.csv", 
+        "result-file-path": "/media/HDD1/Shruti/POLYP_CCNET/training_results/with_transconv.csv", 
         "imagenet-mean": "104.00698793,116.66876762,122.67891434",
-        "tensorboard-output": "/media/HDD1/Shruti/POLYP_CCNET/tensorboard/runs/baseline", 
-        "snapshot-dir": "/media/HDD1/Shruti/POLYP_CCNET/snapshots/baseline/",
-        "best-checkpoint-fpath": "/media/HDD1/Shruti/POLYP_CCNET/snapshots/baseline/best_checkpoint.pth", 
-        "current-checkpoint-fpath": "/media/HDD1/Shruti/POLYP_CCNET/snapshots/baseline/current_checkpoint.pth"
+        "tensorboard-output": "/media/HDD1/Shruti/POLYP_CCNET/tensorboard/runs/with_transconv", 
+        "snapshot-dir": "/media/HDD1/Shruti/POLYP_CCNET/snapshots/with_transconv/",
+        "best-checkpoint-fpath": "/media/HDD1/Shruti/POLYP_CCNET/snapshots/with_transconv/best_checkpoint.pth", 
+        "current-checkpoint-fpath": "/media/HDD1/Shruti/POLYP_CCNET/snapshots/with_transconv/current_checkpoint.pth"
     },
     "evaluation": {
         "test-batch-size": 1,
