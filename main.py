@@ -95,8 +95,6 @@ def get_parser(config):
                         help="folder path")
     parser.add_argument("--num-workers", type=int, default=config['training']['num-workers'],
                         help="choose the number of workers.")
-    parser.add_argument("--val-images-saving-path", type=str, default=config['evaluation']['val-images-saving-path'],
-                        help="val images saving path to save image")
     parser.add_argument("--tensorboard-output", type=str, default=config['training']['tensorboard-output'],
                         help="tensorboard-output path to save image")
     parser.add_argument("--max-epochs", type=int, default=config['training']['max-epochs'],

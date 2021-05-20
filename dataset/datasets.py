@@ -35,13 +35,6 @@ class KvasirSegDataSet(data.Dataset):
                 "label": label_path,
                 "name": name
             })
-
-        self.id_to_trainid = {-1: ignore_label, 0: ignore_label, 1: ignore_label, 2: ignore_label,
-                              3: ignore_label, 4: ignore_label, 5: ignore_label, 6: ignore_label,
-                              7: 0, 8: 1, 9: ignore_label, 10: ignore_label, 11: 2, 12: 3, 13: 4,
-                              14: ignore_label, 15: ignore_label, 16: ignore_label, 17: 5,
-                              18: ignore_label, 19: 6, 20: 7, 21: 8, 22: 9, 23: 10, 24: 11, 25: 12, 26: 13, 27: 14,
-                              28: 15, 29: ignore_label, 30: ignore_label, 31: 16, 32: 17, 33: 18}
                               
 
     def get_img_ids(self, data_dir):
@@ -65,14 +58,11 @@ class KvasirSegDataSet(data.Dataset):
         return image, label
 
 
-    def id2trainId(self, label, reverse=False):
+    def id2trainId(self, label):
         label_copy = label.copy()
-        if reverse:
-            for v, k in self.id_to_trainid.items():
-                label_copy[label == k] = v
-        else:
-            for k, v in self.id_to_trainid.items():
-                label_copy[label == k] = v
+        # for k, v in self.id_to_trainid.items():
+        #     label_copy[label == k] = v
+        label_copy[label!=0] = 1 #edited 
         return label_copy
 
         
@@ -82,6 +72,8 @@ class KvasirSegDataSet(data.Dataset):
         image = cv2.imread(datafiles["img"], cv2.IMREAD_COLOR)
         label = cv2.imread(datafiles["label"], cv2.IMREAD_GRAYSCALE)
         label = self.id2trainId(label)
+
+
         size = image.shape
         name = datafiles["name"]
         if self.scale:
