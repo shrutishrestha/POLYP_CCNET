@@ -136,6 +136,7 @@ dataset/predicted_masks
 dataset/resnet101-imagenet.pth
 dataset/__init__.py
 dataset/scratch
+dataset/*
 .idea
 LICENSE
 snapshots

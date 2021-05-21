@@ -70,13 +70,13 @@ def train_method(epoch, args, criterion, engine, global_iteration, model, optimi
         ccnet_out = train_output[0]
         ccnet_out = F.interpolate(input=ccnet_out, size=(h, w), mode='bilinear', align_corners=True)
         ccnet_out = np.asarray(np.argmax(ccnet_out.cpu().detach().numpy(), axis=1), dtype=np.uint8) #(1, 1024, 2048)
-        confusion_matrix_ccnet += get_confusion_matrix(gt_label = train_labels, pred_label =ccnet_out, class_num = args.num_classes)
+        confusion_matrix_ccnet += get_confusion_matrix(gt_label = train_labels, pred_label =ccnet_out, class_num = args.num_classes, ignore_label=args.ignore_label)
 
         # calculating dice for xdsn
         xdsn_out = train_output[1]
         xdsn_out = F.interpolate(input=xdsn_out, size=(h, w), mode='bilinear', align_corners=True)
         xdsn_out = np.asarray(np.argmax(xdsn_out.cpu().detach().numpy(), axis=1), dtype=np.uint8) #(1, 1024, 2048)
-        confusion_matrix_xdsn += get_confusion_matrix(gt_label = train_labels, pred_label = xdsn_out, class_num = args.num_classes)
+        confusion_matrix_xdsn += get_confusion_matrix(gt_label = train_labels, pred_label = xdsn_out, class_num = args.num_classes, ignore_label=args.ignore_label)
 
         print_str = ' Iter{}/{}:'.format(idx + 1, len(
             train_loader)) + ' lr=%.2e' % lr + ' loss=%.2f' % reduce_loss.item()
