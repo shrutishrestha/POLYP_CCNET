@@ -58,6 +58,15 @@ def write_in_csv(
     val_precision = val_metric["precision"]
     val_recall = val_metric["recall"]
 
+    val_resized_tn = val_metric["resized_tn"]
+    val_resized_fp = val_metric["resized_fp"]
+    val_resized_fn = val_metric["resized_fn"]
+    val_resized_tp = val_metric["resized_tp"]
+    val_resized_iou = val_metric["resized_iou"]
+    val_resized_dice = val_metric["resized_dice"]
+    val_resized_precision = val_metric["resized_precision"]
+    val_resized_recall = val_metric["resized_recall"]
+
     with open(filename, 'a') as csvfile:
         csvwriter = csv.writer(csvfile)
         csvwriter.writerows([[epoch, global_iteration, round(lr, 7),     
@@ -75,7 +84,13 @@ def write_in_csv(
         round(val_meanIU, 7),
         round(val_dice, 7),
         round(val_precision, 7),
-        round(val_recall, 7)]])
+        round(val_recall, 7),
+        val_resized_tn, val_resized_fp, val_resized_fn, val_resized_tp,
+        round(val_resized_iou,7),
+        round(val_resized_dice,7),
+        round(val_resized_precision,7),
+        round(val_resized_recall,7)
+        ]])
 
 
 

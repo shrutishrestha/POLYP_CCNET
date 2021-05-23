@@ -69,10 +69,10 @@ class KvasirSegDataSet(data.Dataset):
     def __getitem__(self, index):
 
         datafiles = self.files[index]
-        image = cv2.imread(datafiles["img"], cv2.IMREAD_COLOR)
+        name = datafiles["name"]
+        ori_image = cv2.imread(datafiles["img"], cv2.IMREAD_COLOR)
         label = cv2.imread(datafiles["label"], cv2.IMREAD_GRAYSCALE)
         label = self.id2trainId(label)
-
 
         size = image.shape
         name = datafiles["name"]
@@ -91,21 +91,11 @@ class KvasirSegDataSet(data.Dataset):
                 pad_w, cv2.BORDER_CONSTANT,
                 value=(self.ignore_label,))
         else:
-            img_pad, label_pad = image, label
+            label = np.asarray(label, np.float32)
+            ori_image = np.asarray(ori_image, np.float32)
+            image = ori_image - self.mean
+            image = image.transpose((2, 0, 1))
 
-        img_h, img_w = label_pad.shape
-        h_off = random.randint(0, img_h - self.crop_h)
-        w_off = random.randint(0, img_w - self.crop_w)
-        # roi = cv2.Rect(w_off, h_off, self.crop_w, self.crop_h);
-        image = np.asarray(img_pad[h_off : h_off+self.crop_h, w_off : w_off+self.crop_w], np.float32)
-        label = np.asarray(label_pad[h_off : h_off+self.crop_h, w_off : w_off+self.crop_w], np.float32)
-        #image = image[:, :, ::-1]  # change to BGR
-        image = image.transpose((2, 0, 1))
-        if self.is_mirror:
-            flip = np.random.choice(2) * 2 - 1
-            image = image[:, :, ::flip]
-            label = label[:, ::flip]
-
-        return image.copy(), label.copy(), np.array(size), name
+            return ori_image, image.copy(), label.copy(), np.array(size), name
 
 

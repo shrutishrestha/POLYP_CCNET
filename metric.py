@@ -1,7 +1,7 @@
 import numpy as np
 import torch
 
-def get_confusion_matrix(gt_label, pred_label, class_num): #seg_gt, seg_pred, args.num_classes
+def get_confusion_matrix(gt_label, pred_label, class_num, ignore_label): #seg_gt, seg_pred, args.num_classes
         """
         Calcute the confusion matrix by given label and pred
         :param gt_label: the ground truth label
@@ -15,6 +15,12 @@ def get_confusion_matrix(gt_label, pred_label, class_num): #seg_gt, seg_pred, ar
             gt_label = gt_label.cpu().detach().numpy()
 
         gt_label = gt_label.flatten()
+
+        valid_flag = gt_label != ignore_label
+        valid_inds = np.where(valid_flag)[0]
+
+        pred_label = pred_label[valid_flag]
+        gt_label = gt_label[valid_flag]
 
         index = (gt_label * class_num + pred_label).astype('int32') #gt_label(array([0, 1]), array([316446,  12684])) pred_label (array([0, 1], dtype=uint8), array([ 77728, 251402]))
 

@@ -202,8 +202,6 @@ def main(config):
                 summary_writer = summary_writer
             )
 
-            torch.save(seg_model.state_dict(), args.current_checkpoint_fpath)
-
             val_loss, val_metric = validation_method(
                 epoch = epoch,
                 args = args, 
@@ -212,6 +210,8 @@ def main(config):
                 criterion = criterion,
                 summary_writer = summary_writer
                 )    
+
+            torch.save(seg_model.state_dict(), args.current_checkpoint_fpath)
 
             if val_metric["dice"] > best_val_metric:
                 best_val_metric = val_metric["dice"]
