@@ -128,6 +128,7 @@ def predict_multiscale(net, image, tile_size, scales, classes, flip_evaluation, 
 
 
 def validation_method(epoch, args, model, test_loader, criterion, summary_writer):
+
     """Create the model and start the evaluation process."""
     model.eval()
     h, w = map(int, args.input_size.split(','))
@@ -142,7 +143,7 @@ def validation_method(epoch, args, model, test_loader, criterion, summary_writer
     val_loss_sum = 0
     for idx in pbar:
 
-        image, label, size, name = dataloader.next() #[1, 3, 1024, 2048] #[1, 1024, 2048]
+        original_image, image, label, size, name = dataloader.next() #[1, 3, 1024, 2048] #[1, 1024, 2048]
 
 
         size = (size[0][0],size[0][1])
@@ -171,10 +172,9 @@ def validation_method(epoch, args, model, test_loader, criterion, summary_writer
 
         print_str = ' Iter{}/{}'.format(idx + 1, len(test_loader))
 
-        merged_image = get_val_merged_image(gt, pred)
+        merged_image = get_val_merged_image(original_image, gt, pred)
 
-        if idx==10 or idx==50:
-            summary_writer.add_image(tag="eval_"+name[0], img_tensor = merged_image, global_step=epoch)
+        summary_writer.add_image(tag="eval_"+name[0], img_tensor = merged_image, global_step=epoch)
 
     #for metric
 

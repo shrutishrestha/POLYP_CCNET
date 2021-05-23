@@ -84,7 +84,7 @@ def train_method(epoch, args, criterion, engine, global_iteration, model, optimi
 
         merged_image = get_train_merged_image(train_images[0], train_labels[0], ccnet_out[0])
 
-        if idx==100 or idx == 500:
+        if idx==100:
             summary_writer.add_image(tag="train_"+name[0], img_tensor = merged_image, global_step=epoch)
         
         train_pbar.set_description(print_str, refresh=False)
