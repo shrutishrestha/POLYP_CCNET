@@ -14,7 +14,6 @@ from metric import calculate_metrics
 import numpy as np
 from utils.image_utils import get_train_merged_image
 from metric import get_confusion_matrix
-from torch.utils.tensorboard import SummaryWriter
 
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -43,6 +42,7 @@ def train_method(epoch, args, criterion, engine, global_iteration, model, optimi
     confusion_matrix_ccnet = np.zeros((args.num_classes,args.num_classes))
 
     for idx in train_pbar:
+
         global_iteration += 1
 
         train_images, train_labels, _, name = train_loader_iterator.next()
@@ -90,13 +90,13 @@ def train_method(epoch, args, criterion, engine, global_iteration, model, optimi
         train_pbar.set_description(print_str, refresh=False)
         torch.cuda.empty_cache()
 
-        
+
     tn_train_ccnet, fp_train_ccnet, fn_train_ccnet, tp_train_ccnet, meanIU_train_ccnet, dice_train_ccnet, prec_ccnet, recall_ccnet = calculate_metrics(confusion_matrix_ccnet)
     tn_train_dsn, fp_train_dsn, fn_train_dsn, tp_train_dsn, meanIU_train_dsn, dice_train_dsn, prec_dsn, recall_dsn = calculate_metrics(confusion_matrix_xdsn)
 
     train_loss = round(train_loss_sum/len(train_loader),6)
 
-    ccnet_train_metric = {
+    train_ccnet_metric = {
         "tn" : tn_train_ccnet,
         "fp" : fp_train_ccnet, 
         "fn" : fn_train_ccnet,
@@ -107,7 +107,7 @@ def train_method(epoch, args, criterion, engine, global_iteration, model, optimi
         "recall" : recall_ccnet
     }
     
-    dsn_train_metric = {
+    train_dsn_metric = {
         "tn" : tn_train_dsn,
         "fp" : fp_train_dsn,
         "fn" : fn_train_dsn,
@@ -118,5 +118,5 @@ def train_method(epoch, args, criterion, engine, global_iteration, model, optimi
         "recall" : recall_dsn
     }
 
-    return lr,train_loss, dsn_train_metric, ccnet_train_metric
+    return global_iteration, lr, model, optimizer, train_loss, train_dsn_metric, train_ccnet_metric
     

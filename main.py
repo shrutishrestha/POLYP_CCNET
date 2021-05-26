@@ -191,7 +191,10 @@ def main(config):
                 run = False
                 break
 
-            lr, train_loss, train_dsn_metric, train_ccnet_metric = train_method(
+            epoch +=1 
+
+
+            global_iteration, lr, model, optimizer, train_loss, train_dsn_metric, train_ccnet_metric = train_method(
                 epoch = epoch,
                 args = args,
                 criterion = criterion,
@@ -219,7 +222,6 @@ def main(config):
                 best_val_metric = val_metric["dice"]
                 shutil.copyfile(args.current_checkpoint_fpath, args.best_checkpoint_fpath)
             
-            epoch +=1 
 
             write_in_tensorboard(
             epoch = epoch,
@@ -241,6 +243,8 @@ def main(config):
             val_loss = val_loss,
             val_metric = val_metric
             )
+
+
 
 
 def get_data_loaders(args, engine):
