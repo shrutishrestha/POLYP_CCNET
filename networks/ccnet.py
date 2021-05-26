@@ -10,8 +10,8 @@ import functools
 
 import sys, os
 
-#from cc_attention import CrissCrossAttention 
-from .CC import CC_module as CrissCrossAttention 
+#from cc_attention import CrissCrossAttention
+from .CC import CC_module as CrissCrossAttention
 from utils.pyt_utils import load_model
 
 from inplace_abn import InPlaceABN, InPlaceABNSync
@@ -65,14 +65,14 @@ class Bottleneck(nn.Module):
         if self.downsample is not None:
             residual = self.downsample(x)
 
-        out = out + residual      
+        out = out + residual
         out = self.relu_inplace(out)
 
         return out
 
 class PSPModule(nn.Module):
     """
-    Reference: 
+    Reference:
         Zhao, Hengshuang, et al. *"Pyramid scene parsing network."*
     """
     def __init__(self, features, out_features=512, sizes=(1, 2, 3, 6)):
@@ -137,7 +137,7 @@ class ResNet(nn.Module):
         self.conv3 = conv3x3(64, 128)
         self.bn3 = BatchNorm2d(128)
         self.relu3 = nn.ReLU(inplace=False)
-        self.maxpool = nn.MaxPool2d(kernel_size=3, stride=2, padding=1)
+
 
         self.relu = nn.ReLU(inplace=False)
         self.maxpool = nn.MaxPool2d(kernel_size=3, stride=2, padding=1, ceil_mode=True) # change
@@ -147,6 +147,28 @@ class ResNet(nn.Module):
         self.layer4 = self._make_layer(block, 512, layers[3], stride=1, dilation=4, multi_grid=(1,1,1))
         #self.layer5 = PSPModule(2048, 512)
         self.head = RCCAModule(2048, 512, num_classes)
+
+        self.inv_128_64 = nn.ConvTranspose2d(128,64,kernel_size=3,stride=2,padding=1)
+        self.bn64_input = nn.BatchNorm2d(64,track_running_stats=False)
+        self.conv_reduce_64_1 = nn.Conv2d(64,1,stride=1,kernel_size=1)
+
+        self.inv_256_128_x1 = nn.ConvTranspose2d(256,128, kernel_size=3,stride=2, padding=2)
+        self.bn128_x1 = nn.BatchNorm2d(128,track_running_stats=False)
+        self.inv_128_64_x1 = nn.ConvTranspose2d(128,64,kernel_size=3,stride=2,padding=1)
+        self.bn64_x1= nn.BatchNorm2d(64,track_running_stats=False)
+        self.conv_reduce_64_1_x1 = nn.Conv2d(64,1,stride=1,kernel_size=1)
+
+        self.inv_2048_1024_x4 = nn.ConvTranspose2d(2048,1024,kernel_size=3,stride=2,padding=2)
+        self.inv_1024_512_x4 = nn.ConvTranspose2d(1024,512,kernel_size=3,stride=2,padding=1)
+        self.inv_512_256_x4 = nn.ConvTranspose2d(512,256, kernel_size=3,stride=2, padding=1)
+
+        self.bn1024_x4 = nn.BatchNorm2d(1024,track_running_stats=False)
+        self.bn512_x4 = nn.BatchNorm2d(512,track_running_stats=False)
+        self.bn256_x4 = nn.BatchNorm2d(256,track_running_stats=False)
+
+        self.conv_reduce_256_1_x4 = nn.Conv2d(256,1,stride=1,kernel_size=1)
+
+        self.conv_reduce_3_1 = nn.Conv2d(3,1,stride=1,kernel_size=1)
 
         self.dsn = nn.Sequential(
             nn.Conv2d(1024, 512, kernel_size=3, stride=1, padding=1),
@@ -174,29 +196,48 @@ class ResNet(nn.Module):
 
         return nn.Sequential(*layers)
 
-    def forward(self, x, labels=None):
-        x = self.relu1(self.bn1(self.conv1(x)))
-        x = self.relu2(self.bn2(self.conv2(x)))
-        x = self.relu3(self.bn3(self.conv3(x)))
-        x = self.maxpool(x)
-        x = self.layer1(x)
-        x = self.layer2(x)
-        x = self.layer3(x)
+    def forward(self, x, labels=None): #[2, 3, 512, 512]
 
-        x_dsn = self.dsn(x)
+        x = self.relu1(self.bn1(self.conv1(x))) #2, 64, 256, 256
+        x = self.relu2(self.bn2(self.conv2(x))) #2, 64, 256, 256
 
-        x = self.layer4(x)
+        x_input = self.relu3(self.bn3(self.conv3(x))) #2, 128, 256, 256
 
-        x = self.head(x, self.recurrence)
-        outs = [x, x_dsn]
+        x_maxpool = self.maxpool(x_input) #2, 128, 129, 129
+
+        x1 = self.layer1(x_maxpool) #[2, 256, 129, 129
+
+        x2 = self.layer2(x1) #[2, 512, 65, 65]
+
+        x3 = self.layer3(x2) #2, 1024, 65, 65
+
+        x_dsn = self.dsn(x3) #2, 1024, 65, 65
+
+        x4 = self.layer4(x3) #2, 2048, 65, 65
+
+        x_head = self.head(x4, self.recurrence)
+
+        #xinput
+        xinput_inv = self.relu(self.bn64_input(self.inv_128_64(x_input, output_size=(512,512))))  #[2, 64, 512, 512]
+        xinput_inv = self.conv_reduce_64_1(xinput_inv) #2, 1, 512, 512
+
+        #x1
+        x1_inv = self.relu(self.bn128_x1(self.inv_256_128_x1(x1,output_size=(256,256)))) #[2, 128, 256, 256]
+        x1_inv = self.relu(self.bn64_x1(self.inv_128_64_x1(x1_inv, output_size=(512,512)))) #[2, 64, 512, 512]
+        x1_inv = self.conv_reduce_64_1_x1(x1_inv)  #[2, 1, 512, 512]
+
+        #x4
+        x4_inv = self.relu(self.bn1024_x4(self.inv_2048_1024_x4(x4,output_size=(128,128)))) #[2, 1024, 128, 128]
+        x4_inv = self.relu(self.bn512_x4(self.inv_1024_512_x4(x4_inv,output_size=(256,256)))) #[2, 512, 256, 256]
+        x4_inv = self.relu(self.bn256_x4(self.inv_512_256_x4(x4_inv, output_size=(512,512)))) #[2, 256, 512, 512]
+        x4_inv = self.conv_reduce_256_1_x4(x4_inv)  #[2, 1, 512, 512]
+
+        x_inv_cat = torch.cat([xinput_inv, x1_inv, x4_inv], 1)
+
+        x_upsampled_dsn =  self.conv_reduce_3_1(x_inv_cat)
+
+        ccnet_out = F.interpolate(input=x_head, size=(512, 512), mode='bilinear', align_corners=True)
+
+        outs = [ccnet_out, x_upsampled_dsn]
 
         return outs
-
-
-def Seg_Model(num_classes, criterion=None, pretrained_model=None, recurrence=0, **kwargs):
-    model = ResNet(Bottleneck,[3, 4, 23, 3], num_classes, criterion, recurrence)
-
-    if pretrained_model is not None:
-        model = load_model(model, pretrained_model)
-
-    return model
