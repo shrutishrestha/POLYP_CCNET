@@ -56,7 +56,7 @@ def train_method(epoch, args, criterion, engine, global_iteration, model, optimi
 
         train_output = model(x=train_images, labels=train_labels)  
         loss = criterion(preds=train_output, target=train_labels)
-
+        
         reduce_loss = loss.data
         train_loss = reduce_loss.item()
         train_loss_sum += train_loss

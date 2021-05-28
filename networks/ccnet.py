@@ -168,7 +168,7 @@ class ResNet(nn.Module):
 
         self.conv_reduce_256_1_x4 = nn.Conv2d(256,1,stride=1,kernel_size=1)
 
-        self.conv_reduce_3_1 = nn.Conv2d(3,1,stride=1,kernel_size=1)
+        self.conv_reduce_3_2 = nn.Conv2d(3,2,stride=1,kernel_size=1)
 
         self.dsn = nn.Sequential(
             nn.Conv2d(1024, 512, kernel_size=3, stride=1, padding=1),
@@ -221,12 +221,12 @@ class ResNet(nn.Module):
         xinput_inv = self.relu(self.bn64_input(self.inv_128_64(x_input, output_size=(512,512))))  #[2, 64, 512, 512]
         xinput_inv = self.conv_reduce_64_1(xinput_inv) #2, 1, 512, 512
 
-        #x1
+        # #x1
         x1_inv = self.relu(self.bn128_x1(self.inv_256_128_x1(x1,output_size=(256,256)))) #[2, 128, 256, 256]
         x1_inv = self.relu(self.bn64_x1(self.inv_128_64_x1(x1_inv, output_size=(512,512)))) #[2, 64, 512, 512]
         x1_inv = self.conv_reduce_64_1_x1(x1_inv)  #[2, 1, 512, 512]
 
-        #x4
+        # #x4
         x4_inv = self.relu(self.bn1024_x4(self.inv_2048_1024_x4(x4,output_size=(128,128)))) #[2, 1024, 128, 128]
         x4_inv = self.relu(self.bn512_x4(self.inv_1024_512_x4(x4_inv,output_size=(256,256)))) #[2, 512, 256, 256]
         x4_inv = self.relu(self.bn256_x4(self.inv_512_256_x4(x4_inv, output_size=(512,512)))) #[2, 256, 512, 512]
@@ -234,10 +234,9 @@ class ResNet(nn.Module):
 
         x_inv_cat = torch.cat([xinput_inv, x1_inv, x4_inv], 1)
 
-        x_upsampled_dsn =  self.conv_reduce_3_1(x_inv_cat)
+        x_upsampled_dsn =  self.conv_reduce_3_2(x_inv_cat)
 
         ccnet_out = F.interpolate(input=x_head, size=(512, 512), mode='bilinear', align_corners=True)
-
         outs = [ccnet_out, x_upsampled_dsn]
 
         return outs

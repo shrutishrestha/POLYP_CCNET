@@ -51,7 +51,7 @@ class CriterionOhemDSN(nn.Module):
 
         else:
             h, w = target.shape[1], target.shape[2]
-        
+
         if len(preds) ==2:
             
             scale_pred = F.interpolate(input=preds[0], size=(h, w), mode='bilinear', align_corners=True)
