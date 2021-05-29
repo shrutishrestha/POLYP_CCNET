@@ -19,7 +19,7 @@ from tqdm import tqdm
 import os.path as osp
 import networks
 from dataset.datasets import KvasirSegDataSet
-from networks.ccnet import ResNet, Bottleneck, RCCAModule
+from networks.ccnet_769 import ResNet, Bottleneck, RCCAModule
 from torch.utils.tensorboard import SummaryWriter
 from PIL import Image
 from torch.nn import functional as F
