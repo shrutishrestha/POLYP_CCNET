@@ -19,7 +19,6 @@ from tqdm import tqdm
 import os.path as osp
 import networks
 from dataset.datasets import KvasirSegDataSet
-from networks.ccnet import ResNet, Bottleneck, RCCAModule
 from torch.utils.tensorboard import SummaryWriter
 from PIL import Image
 from torch.nn import functional as F
@@ -48,6 +47,8 @@ def get_parser(config):
     parser.add_argument("--train-data-path", type=str, default=config['training']['train-data-path'],
                         help="training data path")
 
+    parser.add_argument("--backbone", type=str, default=config['training']['backbone'],
+                        help="backbone architecture")
     parser.add_argument("--power", type=float, default=config['training']['power'],
                         help="Decay parameter to compute the learning rate.")
     parser.add_argument("--train-batch-size", type=int, default=config['training']['train-batch-size'],
@@ -160,9 +161,11 @@ def main(config):
         else:
             criterion = CriterionDSN() 
 
-        seg_model = ResNet(Bottleneck, [3, 4, 23, 3], num_classes=args.num_classes, criterion=criterion,
-                           recurrence=args.recurrence)
-        seg_model = load_model(seg_model, model_file=args.restore_from)
+        seg_model = eval('networks.' + args.model + '.Seg_Model')(
+            backbone = args.backbone,
+            num_classes=args.num_classes, criterion=criterion,
+            pretrained_model=args.restore_from, recurrence=args.recurrence
+        )
 
         optimizer = optim.SGD(
             [{'params': filter(lambda p: p.requires_grad, seg_model.parameters()), 'lr': args.learning_rate}],
