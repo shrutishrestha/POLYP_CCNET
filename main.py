@@ -215,12 +215,14 @@ def main(config):
                 criterion = criterion,
                 summary_writer = summary_writer
                 )    
-
+            print("writen current checkpoint")
             torch.save(seg_model.state_dict(), args.current_checkpoint_fpath)
 
             if val_metric["dice"] > best_val_metric:
                 best_val_metric = val_metric["dice"]
                 shutil.copyfile(args.current_checkpoint_fpath, args.best_checkpoint_fpath)
+                print("writen best checkpoint")
+
             
 
             write_in_tensorboard(

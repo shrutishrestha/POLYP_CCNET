@@ -1,0 +1,90 @@
+[1mdiff --git a/main.py b/main.py[m
+[1mindex 456c48d..155c1a5 100755[m
+[1m--- a/main.py[m
+[1m+++ b/main.py[m
+[36m@@ -172,6 +172,8 @@[m [mdef main(config):[m
+         seg_model.to(device)[m
+         model = torch.nn.DataParallel(seg_model)[m
+ [m
+[32m+[m
+[32m+[m
+         # check and making directories[m
+         check_and_make_directories([args.snapshot_dir, args.result_dir])[m
+         check_and_make_files([args.result_file_path], result_file=True)[m
+[36m@@ -193,7 +195,6 @@[m [mdef main(config):[m
+ [m
+             epoch +=1 [m
+ [m
+[31m-[m
+             global_iteration, lr, model, optimizer, train_loss, train_dsn_metric, train_ccnet_metric = train_method([m
+                 epoch = epoch,[m
+                 args = args,[m
+[36m@@ -215,12 +216,14 @@[m [mdef main(config):[m
+                 criterion = criterion,[m
+                 summary_writer = summary_writer[m
+                 )    [m
+[31m-[m
+[32m+[m[32m            print("writen current checkpoint")[m
+             torch.save(seg_model.state_dict(), args.current_checkpoint_fpath)[m
+ [m
+             if val_metric["dice"] > best_val_metric:[m
+                 best_val_metric = val_metric["dice"][m
+                 shutil.copyfile(args.current_checkpoint_fpath, args.best_checkpoint_fpath)[m
+[32m+[m[32m                print("writen best checkpoint")[m
+[32m+[m
+             [m
+ [m
+             write_in_tensorboard([m
+[1mdiff --git a/myutils.py b/myutils.py[m
+[1mindex ac2cf59..ca8cd3d 100644[m
+[1m--- a/myutils.py[m
+[1m+++ b/myutils.py[m
+[36m@@ -7,6 +7,7 @@[m [mdef check_and_make_files(filepath, result_file = False):[m
+         for file in filepath:[m
+             if not os.path.exists(file) or os.stat(file).st_size == 0:[m
+                 with open(file, 'w') as csvfile:[m
+[32m+[m[32m                    print("new csv writen file", file)[m
+                     csvwriter = csv.writer(csvfile)[m
+                     csvwriter.writerows([["epoch", "global_iteration", "lr",     [m
+                 "train_ccnet_tn", "train_ccnet_fp", "train_ccnet_fn", "train_ccnet_tp", "train_ccnet_meanIU", "train_ccnet_dice", "train_ccnet_precision", "train_ccnet_recall",[m
+[36m@@ -17,10 +18,12 @@[m [mdef check_and_make_files(filepath, result_file = False):[m
+     for file in filepath:[m
+         if not os.path.exists(file):[m
+             with open(file, 'w') as fp:[m
+[32m+[m[32m                print("formed new file", file)[m
+                 pass[m
+ [m
+ [m
+ def check_and_make_directories(directories):[m
+     for directory in directories:[m
+         if not os.path.exists(directory):[m
+[31m-            os.makedirs(directory)[m
+\ No newline at end of file[m
+[32m+[m[32m            os.makedirs(directory)[m
+[32m+[m[32m            print("formed new folder", directory)[m
+[1mdiff --git a/train.py b/train.py[m
+[1mindex 068263d..a079719 100644[m
+[1m--- a/train.py[m
+[1m+++ b/train.py[m
+[36m@@ -14,6 +14,7 @@[m [mfrom metric import calculate_metrics[m
+ import numpy as np[m
+ from utils.image_utils import get_train_merged_image[m
+ from metric import get_confusion_matrix[m
+[32m+[m[32mimport torch.autograd.profiler as profiler[m
+ [m
+ [m
+ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")[m
+[36m@@ -49,7 +50,12 @@[m [mdef train_method(epoch, args, criterion, engine, global_iteration, model, optimi[m
+ [m
+         train_images = train_images.to(device)[m
+         train_labels = train_labels.long().to(device)[m
+[31m-[m
+[32m+[m[32m        with torch.cuda.profiler.profile():[m
+[32m+[m[32m            model(x) # Run once, to pre-allocate memory, and initialize CUDA profiler[m
+[32m+[m[32m            with torch.autograd.profiler.emit_nvtx() as p:[m
+[32m+[m[32m                model(x=train_images, labels=train_labels)[m[41m  [m
+[32m+[m[32m        print("---finished----")[m
+[32m+[m[32m        break[m
+         optimizer.zero_grad()[m
+         num_steps = len(train_loader)* args.max_epochs[m
+         lr = adjust_learning_rate(optimizer, args.learning_rate, global_iteration - 1, num_steps, args.power)[m

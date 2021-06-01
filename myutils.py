@@ -7,6 +7,7 @@ def check_and_make_files(filepath, result_file = False):
         for file in filepath:
             if not os.path.exists(file) or os.stat(file).st_size == 0:
                 with open(file, 'w') as csvfile:
+                    print("new csv writen file", file)
                     csvwriter = csv.writer(csvfile)
                     csvwriter.writerows([["epoch", "global_iteration", "lr",     
                 "train_ccnet_tn", "train_ccnet_fp", "train_ccnet_fn", "train_ccnet_tp", "train_ccnet_meanIU", "train_ccnet_dice", "train_ccnet_precision", "train_ccnet_recall",
@@ -17,6 +18,7 @@ def check_and_make_files(filepath, result_file = False):
     for file in filepath:
         if not os.path.exists(file):
             with open(file, 'w') as fp:
+                print("formed new file", file)
                 pass
 
 
@@ -24,3 +26,4 @@ def check_and_make_directories(directories):
     for directory in directories:
         if not os.path.exists(directory):
             os.makedirs(directory)
+            print("formed new folder", directory)
