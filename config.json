@@ -3,6 +3,7 @@
     "model": "ccnet",
     "training": {
         "power": 0.9, 
+        "backbone": "ResNet-101",
         "train-batch-size": 2,
         "test-batch-size": 1,
         "momentum": 0.9,
@@ -14,7 +15,7 @@
         "input-size": "512,512",
         "crop-size": "512,512",
         "train-data-path": "/media/HDD1/Shruti/CCNet/dataset/Kvasir-SEG/trainset",
-        "restore-from": "/media/HDD1/Shruti/CCNet/dataset/resnet101-imagenet.pth",
+        "restore-from": "/media/HDD1/Shruti/CCNet/dataset/",
         "start-iters": 0,
         "gpu": "0,1",
         "model": "ccnet",
