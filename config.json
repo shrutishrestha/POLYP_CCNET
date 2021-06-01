@@ -3,7 +3,7 @@
     "model": "ccnet",
     "training": {
         "power": 0.9, 
-        "backbone": "ResNet-101",
+        "backbone": "ResNet-50",
         "train-batch-size": 2,
         "test-batch-size": 1,
         "momentum": 0.9,
@@ -25,12 +25,12 @@
         "max-epochs": 300,
         "num-workers": 8,
         "result-dir": "/media/HDD1/Shruti/POLYP_CCNET/training_results",
-        "result-file-path": "/media/HDD1/Shruti/POLYP_CCNET/training_results/baseline_512.csv", 
+        "result-file-path": "/media/HDD1/Shruti/POLYP_CCNET/training_results/baseline_769_resnet50.csv", 
         "imagenet-mean": "104.00698793,116.66876762,122.67891434",
-        "tensorboard-output": "/media/HDD1/Shruti/POLYP_CCNET/tensorboard/runs/baseline_512", 
-        "snapshot-dir": "/media/HDD1/Shruti/POLYP_CCNET/snapshots/baseline_512/",
-        "best-checkpoint-fpath": "/media/HDD1/Shruti/POLYP_CCNET/snapshots/baseline_512/best_checkpoint.pth", 
-        "current-checkpoint-fpath": "/media/HDD1/Shruti/POLYP_CCNET/snapshots/baseline_512/current_checkpoint.pth"
+        "tensorboard-output": "/media/HDD1/Shruti/POLYP_CCNET/tensorboard/runs/baseline_769_resnet50", 
+        "snapshot-dir": "/media/HDD1/Shruti/POLYP_CCNET/snapshots/baseline_769_resnet50/",
+        "best-checkpoint-fpath": "/media/HDD1/Shruti/POLYP_CCNET/snapshots/baseline_769_resnet50/best_checkpoint.pth", 
+        "current-checkpoint-fpath": "/media/HDD1/Shruti/POLYP_CCNET/snapshots/baseline_769_resnet50/current_checkpoint.pth"
     },
     "evaluation": {
         "test-batch-size": 1,
