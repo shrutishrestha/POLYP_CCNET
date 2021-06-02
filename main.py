@@ -160,7 +160,7 @@ def main(config):
             criterion = CriterionOhemDSN(thresh=args.ohem_thres, min_kept=args.ohem_keep)
         else:
             criterion = CriterionDSN() 
-
+        print("args.model ",args.model )
         seg_model = eval('networks.' + args.model + '.Seg_Model')(
             backbone = args.backbone,
             num_classes=args.num_classes, criterion=criterion,

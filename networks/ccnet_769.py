@@ -112,7 +112,7 @@ class RCCAModule(nn.Module):
             nn.Conv2d(in_channels+inter_channels, out_channels, kernel_size=3, padding=1, dilation=1, bias=False),
             BatchNorm2d(out_channels),nn.ReLU(inplace=False),
             nn.Dropout2d(0.1),
-            nn.Conv2d(512, num_classes, kernel_size=1, stride=1, padding=0, bias=True)
+            nn.Conv2d(out_channels, num_classes, kernel_size=1, stride=1, padding=0, bias=True)
             )
 
     def forward(self, x, recurrence=1):
@@ -147,6 +147,8 @@ class ResNet(nn.Module):
         self.layer4 = self._make_layer(block, 512, layers[3], stride=1, dilation=4, multi_grid=(1,1,1))
         #self.layer5 = PSPModule(2048, 512)
         self.head = RCCAModule(2048, 512, num_classes)
+        self.head1 = RCCAModule(256, 64, num_classes)
+
 
         self.inv_128_64 = nn.ConvTranspose2d(128,64,kernel_size=3,stride=2,padding=1)
         self.bn64_input = nn.BatchNorm2d(64,track_running_stats=False)
@@ -206,6 +208,7 @@ class ResNet(nn.Module):
         x_maxpool = self.maxpool(x_input) #2, 128, 129, 129
 
         x1 = self.layer1(x_maxpool) #[2, 256, 129, 129
+        x_head1 = self.head1(x1, self.recurrence) #[2, 64, 129, 129]
 
         x2 = self.layer2(x1) #[2, 512, 97, 97])
 
@@ -237,7 +240,11 @@ class ResNet(nn.Module):
 
         x_upsampled_dsn =  self.conv_reduce_3_2(x_inv_cat)
 
-        ccnet_out = F.interpolate(input=x_head, size=(769, 769), mode='bilinear', align_corners=True)
+        ccnet_head1 = F.interpolate(input=x_head1, size=(769, 769), mode='bilinear', align_corners=True)
+        ccnet_head = F.interpolate(input=x_head, size=(769, 769), mode='bilinear', align_corners=True)
+
+        ccnet_out = ccnet_head1 + ccnet_head
+
         outs = [ccnet_out, x_upsampled_dsn]
 
         return outs
