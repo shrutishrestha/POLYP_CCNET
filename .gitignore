@@ -130,13 +130,13 @@ dmypy.json
 
 
 dataset/Kvasir-SEG
-dataset/list
+dataset/c
 dataset/__pycache__
 dataset/predicted_masks
 dataset/resnet101-imagenet.pth
 dataset/__init__.py
 dataset/scratch
-dataset/*
+
 .idea
 LICENSE
 snapshots

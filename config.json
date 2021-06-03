@@ -3,6 +3,7 @@
     "model": "ccnet",
     "training": {
         "power": 0.9, 
+        "server":1,
         "backbone": "ResNet-50",
         "train-batch-size": 2,
         "test-batch-size": 1,
