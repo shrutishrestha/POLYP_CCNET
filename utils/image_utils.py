@@ -12,8 +12,6 @@ def get_val_merged_image(original_image, label, pred_mask):
     label_copy[label == 1] = 255
     label_copy = np.asarray(label_copy, np.uint8)
 
-    original_image = np.asarray(original_image, np.uint8)
-    original_image = Image.fromarray(np.squeeze(original_image, axis=0))
 
     if len(label_copy.shape) == 3:
         label = Image.fromarray(np.squeeze(label_copy, axis=0))
