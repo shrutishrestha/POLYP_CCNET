@@ -22,7 +22,6 @@ from dataset.datasets import KvasirSegDataSet
 from torch.utils.tensorboard import SummaryWriter
 from PIL import Image
 from torch.nn import functional as F
-from networks.unet import UNet
 from utils.pyt_utils import load_model
 import random
 import time
@@ -44,9 +43,15 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 def get_parser(config):
     parser = argparse.ArgumentParser(description="DeepLab-ResNet Network")
+
+    parser.add_argument("--server", type=int, default=config['training']['server'],
+                        help="server number")
+    parse_obj = parser.parse_args()
+    if parse_obj.server == 2:
+        config = json.load(open("./config_server2.json"))
+
     parser.add_argument("--train-data-path", type=str, default=config['training']['train-data-path'],
                         help="training data path")
-
     parser.add_argument("--backbone", type=str, default=config['training']['backbone'],
                         help="backbone architecture")
     parser.add_argument("--power", type=float, default=config['training']['power'],
@@ -139,7 +144,7 @@ def main(config):
 
     with Engine(custom_parser=parser) as engine:
         args = parser.parse_args()
-
+        
         summary_writer = SummaryWriter(args.tensorboard_output)
 
         cudnn.benchmark = True
