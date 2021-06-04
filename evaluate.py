@@ -135,12 +135,14 @@ def validation_method(epoch, args, model, test_loader, criterion, summary_writer
 
     data_list = []
     confusion_matrix = np.zeros((args.num_classes,args.num_classes))
-
+    confusion_matrix_ccnet_valout = np.zeros((args.num_classes,args.num_classes))
+    confusion_matrix_dsn_valout = np.zeros((args.num_classes,args.num_classes))
     bar_format = '{desc}[{elapsed}<{remaining},{rate_fmt}]'
     pbar = tqdm(range(len(test_loader)), file=sys.stdout,
                 bar_format=bar_format)
     dataloader = iter(test_loader)
     val_loss_sum = 0
+    val_loss_sum1 = 0
     for idx in pbar:
 
         original_image, image, label, size, name = dataloader.next() #[1, 3, 1024, 2048] #[1, 1024, 2048]
@@ -176,10 +178,39 @@ def validation_method(epoch, args, model, test_loader, criterion, summary_writer
 
         summary_writer.add_image(tag="eval_"+name[0], img_tensor = merged_image, global_step=epoch)
 
+        #different approach
+        val_output = model(x=image) 
+        loss1 = criterion(preds=val_output, target=label)
+        reduce_loss1 = loss1.data
+        val_loss1 = reduce_loss1.item()
+        val_loss_sum1 += val_loss1
+
+        # calculating metrics
+        h, w = label.size(1), label.size(2)
+
+        # calculating dice for ccnet_out
+        ccnet_valout = val_output[0]
+        ccnet_valout = F.interpolate(input=ccnet_valout, size=(h, w), mode='bilinear', align_corners=True)
+        ccnet_valout = np.asarray(np.argmax(ccnet_valout.cpu().detach().numpy(), axis=1), dtype=np.uint8) #(1, 1024, 2048)
+        confusion_matrix_ccnet_valout += get_confusion_matrix(gt_label = label, pred_label =ccnet_valout, class_num = args.num_classes, ignore_label=args.ignore_label)
+
+        dsn_valout = val_output[1]
+        dsn_valout = F.interpolate(input=dsn_valout, size=(h, w), mode='bilinear', align_corners=True)
+        dsn_valout = np.asarray(np.argmax(dsn_valout.cpu().detach().numpy(), axis=1), dtype=np.uint8) #(1, 1024, 2048)
+        confusion_matrix_dsn_valout += get_confusion_matrix(gt_label = label, pred_label =dsn_valout, class_num = args.num_classes, ignore_label=args.ignore_label)
+
+
+
+
     #for metric
 
     tn, fp, fn, tp, meanIU, dice, prec, recall = calculate_metrics(confusion_matrix)
+    tn_ccnet, fp_ccnet, fn_ccnet, tp_ccnet, meanIU_ccnet, dice_ccnet, prec_ccnet, recall_ccnet = calculate_metrics(confusion_matrix_ccnet_valout)
+    tn_dsn, fp_dsn, fn_dsn, tp_dsn, meanIU_dsn, dice_dsn, prec_dsn, recall_dsn = calculate_metrics(confusion_matrix_dsn_valout)
+
     val_loss = round(val_loss_sum / len(test_loader), 6)
+    val_loss1 = round(val_loss_sum1 / len(test_loader), 6)
+
 
     val_metric = {  "tn":tn,
                     "fp": fp,
@@ -190,6 +221,24 @@ def validation_method(epoch, args, model, test_loader, criterion, summary_writer
                     "precision": prec,
                     "recall": recall}
 
+    val_ccnet_metric = {    "tn": tn_ccnet,
+                            "fp": fp_ccnet,
+                            "fn": fn_ccnet,
+                            "tp": tp_ccnet,
+                            "meanIU": meanIU_ccnet,
+                            "dice" : dice_ccnet,
+                            "precision": prec_ccnet,
+                            "recall": recall_ccnet}
+    
+    val_dsn_metric = {  "tn": tn_dsn,
+                        "fp": fp_dsn,
+                        "fn": fn_dsn,
+                        "tp": tp_dsn,
+                        "meanIU": meanIU_dsn,
+                        "dice" : dice_dsn,
+                        "precision": prec_dsn,
+                        "recall": recall_dsn}
+    
 
-    return val_loss, val_metric
+    return val_loss,val_loss1, val_metric, val_ccnet_metric, val_dsn_metric
     

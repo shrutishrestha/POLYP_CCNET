@@ -69,17 +69,17 @@ class KvasirSegDataSet(data.Dataset):
 
         datafiles = self.files[index]
         name = datafiles["name"]
-        ori_image = cv2.imread(datafiles["img"], cv2.IMREAD_COLOR)
+        image = cv2.imread(datafiles["img"], cv2.IMREAD_COLOR)
         label = cv2.imread(datafiles["label"], cv2.IMREAD_GRAYSCALE)
         label = self.id2trainId(label)
         
-        size = ori_image.shape
+        size = image.shape
         
         if not self.test:
             if self.scale:
-                ori_image, label = self.generate_scale_label(ori_image, label)
-            ori_image = np.asarray(ori_image, np.float32)
-            image = ori_image - self.mean
+                image, label = self.generate_scale_label(image, label)
+            image = np.asarray(image, np.float32)
+            image = image - self.mean
             img_h, img_w = label.shape
             pad_h = max(self.crop_h - img_h, 0)
             pad_w = max(self.crop_w - img_w, 0)
@@ -109,11 +109,13 @@ class KvasirSegDataSet(data.Dataset):
             return image.copy(), label.copy(), np.array(size), name
 
         else:
-            label = np.asarray(label, np.float32)
-            ori_image = np.asarray(ori_image, np.float32)
-            image = ori_image - self.mean
-            image = image.transpose((2, 0, 1))
 
-            return ori_image, image.copy(), label.copy(), np.array(size), name
+
+            label = np.asarray(label, np.float32)
+            image = np.asarray(image, np.float32)
+            image = image - self.mean
+            image = image.transpose((2, 0, 1))
+ 
+            return datafiles["img"], image.copy(), label.copy(), np.array(size), name
 
 

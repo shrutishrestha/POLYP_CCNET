@@ -6,14 +6,14 @@ import cv2
 import torch
 
 
-def get_val_merged_image(original_image, label, pred_mask):
+def get_val_merged_image(original_image_path, label, pred_mask):
     # label = label.cpu().numpy()
     label_copy = label.copy()
     label_copy[label == 1] = 255
     label_copy = np.asarray(label_copy, np.uint8)
 
-    original_image = np.asarray(original_image, np.uint8)
-    original_image = Image.fromarray(np.squeeze(original_image, axis=0))
+    original_image = Image.open(original_image_path)
+
 
     if len(label_copy.shape) == 3:
         label = Image.fromarray(np.squeeze(label_copy, axis=0))
