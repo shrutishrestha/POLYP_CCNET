@@ -145,7 +145,7 @@ def validation_method(epoch, args, model, test_loader, criterion, summary_writer
     val_loss_sum1 = 0
     for idx in pbar:
 
-        original_image, image, label, size, name = dataloader.next() #[1, 3, 1024, 2048] #[1, 1024, 2048]
+        original_image, image, image_resized, label, size, name = dataloader.next() #[1, 3, 1024, 2048] #[1, 1024, 2048]
 
 
         size = (size[0][0],size[0][1])
@@ -167,6 +167,7 @@ def validation_method(epoch, args, model, test_loader, criterion, summary_writer
 
         seg_gt = gt[ignore_index]
 
+
         seg_pred = pred[ignore_index] #seg_pred (1, 530, 621) seg_gt (1, 530, 621)
 
         confusion_matrix += get_confusion_matrix(seg_gt, seg_pred, args.num_classes, ignore_label = args.ignore_label)
@@ -179,24 +180,27 @@ def validation_method(epoch, args, model, test_loader, criterion, summary_writer
         summary_writer.add_image(tag="eval_"+name[0], img_tensor = merged_image, global_step=epoch)
 
         #different approach
-        val_output = model(x=image) 
+        val_output = model(x=image_resized) 
+        label = label.long().to(device)
         loss1 = criterion(preds=val_output, target=label)
         reduce_loss1 = loss1.data
         val_loss1 = reduce_loss1.item()
         val_loss_sum1 += val_loss1
 
         # calculating metrics
-        h, w = label.size(1), label.size(2)
+
 
         # calculating dice for ccnet_out
         ccnet_valout = val_output[0]
-        ccnet_valout = F.interpolate(input=ccnet_valout, size=(h, w), mode='bilinear', align_corners=True)
+        ccnet_valout = F.interpolate(input=ccnet_valout, size=(size[0],size[1]), mode='bilinear', align_corners=True)
         ccnet_valout = np.asarray(np.argmax(ccnet_valout.cpu().detach().numpy(), axis=1), dtype=np.uint8) #(1, 1024, 2048)
+
         confusion_matrix_ccnet_valout += get_confusion_matrix(gt_label = label, pred_label =ccnet_valout, class_num = args.num_classes, ignore_label=args.ignore_label)
 
         dsn_valout = val_output[1]
-        dsn_valout = F.interpolate(input=dsn_valout, size=(h, w), mode='bilinear', align_corners=True)
+        dsn_valout = F.interpolate(input=dsn_valout, size=(size[0],size[1]), mode='bilinear', align_corners=True)
         dsn_valout = np.asarray(np.argmax(dsn_valout.cpu().detach().numpy(), axis=1), dtype=np.uint8) #(1, 1024, 2048)
+
         confusion_matrix_dsn_valout += get_confusion_matrix(gt_label = label, pred_label =dsn_valout, class_num = args.num_classes, ignore_label=args.ignore_label)
 
 

@@ -15,6 +15,15 @@ def write_in_tensorboard(epoch,
     train_ccnet_dice = train_ccnet_metric["dice"] 
     train_dsn_dice = train_dsn_metric["dice"]
     val_dice = val_metric["dice"]
+    val_meanIU = val_metric["meanIU"]
+
+    val_ccnet_dice = val_ccnet_metric["dice"]
+    val_ccnet_meanIU = val_ccnet_metric["meanIU"]
+
+    val_dsn_dice = val_dsn_metric["dice"]
+    val_dsn_meanIU = val_dsn_metric["meanIU"]
+
+
 
     summary_writer.add_scalar("training/train_loss", train_loss, epoch)
     summary_writer.add_scalar("training/train_ccnet_metric", train_ccnet_dice, epoch)
@@ -23,8 +32,14 @@ def write_in_tensorboard(epoch,
     summary_writer.add_scalar("validation/val_loss1", val_loss1, epoch)
 
     summary_writer.add_scalar("validation/val_dice_sliding_window", val_dice, epoch)
-    summary_writer.add_scalar("validation/val_ccnet_metric", val_ccnet_metric, epoch)
-    summary_writer.add_scalar("validation/val_dsn_metric", val_dsn_metric, epoch)
+    summary_writer.add_scalar("validation/val_meanIU_sliding_window", val_meanIU, epoch)
+
+    summary_writer.add_scalar("validation/val_ccnet_dice", val_ccnet_dice, epoch)
+    summary_writer.add_scalar("validation/val_ccnet_meanIU", val_ccnet_meanIU, epoch)
+
+    summary_writer.add_scalar("validation/val_dsn_dice", val_dsn_dice, epoch)
+    summary_writer.add_scalar("validation/val_dsn_meanIU", val_dsn_meanIU, epoch)
+
 
 
 

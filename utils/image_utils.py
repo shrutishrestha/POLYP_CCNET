@@ -12,7 +12,7 @@ def get_val_merged_image(original_image_path, label, pred_mask):
     label_copy[label == 1] = 255
     label_copy = np.asarray(label_copy, np.uint8)
 
-    original_image = Image.open(original_image_path)
+    original_image = Image.open(original_image_path[0])
 
 
     if len(label_copy.shape) == 3:

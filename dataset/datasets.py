@@ -113,9 +113,15 @@ class KvasirSegDataSet(data.Dataset):
 
             label = np.asarray(label, np.float32)
             image = np.asarray(image, np.float32)
+            image_resized = cv2.resize(image, (769,769), interpolation = cv2.INTER_LINEAR)
+
             image = image - self.mean
+            image_resized = image_resized - self.mean
+
             image = image.transpose((2, 0, 1))
+            image_resized = image_resized.transpose((2, 0, 1))
+
  
-            return datafiles["img"], image.copy(), label.copy(), np.array(size), name
+            return datafiles["img"], image.copy(), image_resized, label.copy(), np.array(size), name
 
 
