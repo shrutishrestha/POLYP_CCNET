@@ -249,20 +249,28 @@ class ResNet(nn.Module):
 
         return outs
 
-def Seg_Model(backbone, num_classes, criterion=None, pretrained_model=None, recurrence=0, **kwargs):
-    if backbone == "ResNet-50":
-        layer = [3, 4, 6, 3]
-        pretrained_file = "resnet50-imagenet.pth"
+def Seg_Model(backbone, num_classes, continue_training, criterion, pretrained_model=None, recurrence=2, **kwargs):
+    if continue_training:
+        print("continue model state")
+        model = ResNet(Bottleneck,[3, 4, 6, 3], num_classes, criterion, recurrence)
 
-    elif backbone == "ResNet-101":
-        layer = [3, 4, 23, 3]
-        pretrained_file = "resnet101-imagenet.pth"
+        if pretrained_model is not None:
+            model = load_model(model, pretrained_model)
+    else:
+        print("starting model state")
+        if backbone == "ResNet-50":
+            layer = [3, 4, 6, 3]
+            pretrained_file = "resnet50-imagenet.pth"
 
-    print("backbone",backbone,"layer",layer)
-    model = ResNet(Bottleneck,layer, num_classes, criterion, recurrence)
+        elif backbone == "ResNet-101":
+            layer = [3, 4, 23, 3]
+            pretrained_file = "resnet101-imagenet.pth"
 
-    if pretrained_model is not None:
-        file_path = os.path.join(pretrained_model, pretrained_file)
-        model = load_model(model, file_path)
+        print("backbone",backbone,"layer",layer)
+        model = ResNet(Bottleneck,layer, num_classes, criterion, recurrence)
+
+        if pretrained_model is not None:
+            file_path = os.path.join(pretrained_model, pretrained_file)
+            model = load_model(model, file_path)
 
     return model
