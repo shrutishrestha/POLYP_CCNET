@@ -143,65 +143,66 @@ def validation_method(epoch, args, model, test_loader, criterion, summary_writer
     dataloader = iter(test_loader)
     val_loss_sum = 0
     val_loss_sum1 = 0
-    for idx in pbar:
+    with torch.no_grad():
+        for idx in pbar:
 
-        original_image, image, image_resized, label, size, name = dataloader.next() #[1, 3, 1024, 2048] #[1, 1024, 2048]
+            original_image, image, image_resized, label, size, name = dataloader.next() #[1, 3, 1024, 2048] #[1, 1024, 2048]
 
 
-        size = (size[0][0],size[0][1])
+            size = (size[0][0],size[0][1])
 
-        with torch.no_grad():
-            output = predict_multiscale(net = model, image = image, tile_size = (h, w), scales = [1.0], classes = args.num_classes, flip_evaluation = False, recurrence = 0) #(1, 530, 621, 2)
+            with torch.no_grad():
+                output = predict_multiscale(net = model, image = image, tile_size = (h, w), scales = [1.0], classes = args.num_classes, flip_evaluation = False, recurrence = 0) #(1, 530, 621, 2)
+            
+            output = output.transpose(0,3,1,2)
+
+            loss = criterion(preds=output, target=label)
+            reduce_loss = loss.data
+            val_loss_sum += reduce_loss.item()
+
+            #metric
+            pred = np.asarray(np.argmax(output, axis=1), dtype=np.uint8) #(1, 1024, 2048)
+            gt = np.asarray(label.numpy()[:,:size[0],:size[1]], dtype=np.int) #(1, 530, 621)
         
-        output = output.transpose(0,3,1,2)
+            ignore_index = gt != 255
 
-        loss = criterion(preds=output, target=label)
-        reduce_loss = loss.data
-        val_loss_sum += reduce_loss.item()
-
-        #metric
-        pred = np.asarray(np.argmax(output, axis=1), dtype=np.uint8) #(1, 1024, 2048)
-        gt = np.asarray(label.numpy()[:,:size[0],:size[1]], dtype=np.int) #(1, 530, 621)
-    
-        ignore_index = gt != 255
-
-        seg_gt = gt[ignore_index]
+            seg_gt = gt[ignore_index]
 
 
-        seg_pred = pred[ignore_index] #seg_pred (1, 530, 621) seg_gt (1, 530, 621)
+            seg_pred = pred[ignore_index] #seg_pred (1, 530, 621) seg_gt (1, 530, 621)
 
-        confusion_matrix += get_confusion_matrix(seg_gt, seg_pred, args.num_classes, ignore_label = args.ignore_label)
-
-
-        print_str = ' Iter{}/{}'.format(idx + 1, len(test_loader))
-
-        merged_image = get_val_merged_image(original_image, gt, pred)
-
-        summary_writer.add_image(tag="eval_"+name[0], img_tensor = merged_image, global_step=epoch)
-
-        #different approach
-        val_output = model(x=image_resized) 
-        label = label.long().to(device)
-        loss1 = criterion(preds=val_output, target=label)
-        reduce_loss1 = loss1.data
-        val_loss1 = reduce_loss1.item()
-        val_loss_sum1 += val_loss1
-
-        # calculating metrics
+            confusion_matrix += get_confusion_matrix(seg_gt, seg_pred, args.num_classes, ignore_label = args.ignore_label)
 
 
-        # calculating dice for ccnet_out
-        ccnet_valout = val_output[0]
-        ccnet_valout = F.interpolate(input=ccnet_valout, size=(size[0],size[1]), mode='bilinear', align_corners=True)
-        ccnet_valout = np.asarray(np.argmax(ccnet_valout.cpu().detach().numpy(), axis=1), dtype=np.uint8) #(1, 1024, 2048)
+            print_str = ' Iter{}/{}'.format(idx + 1, len(test_loader))
 
-        confusion_matrix_ccnet_valout += get_confusion_matrix(gt_label = label, pred_label =ccnet_valout, class_num = args.num_classes, ignore_label=args.ignore_label)
+            merged_image = get_val_merged_image(original_image, gt, pred)
 
-        dsn_valout = val_output[1]
-        dsn_valout = F.interpolate(input=dsn_valout, size=(size[0],size[1]), mode='bilinear', align_corners=True)
-        dsn_valout = np.asarray(np.argmax(dsn_valout.cpu().detach().numpy(), axis=1), dtype=np.uint8) #(1, 1024, 2048)
+            summary_writer.add_image(tag="eval_"+name[0], img_tensor = merged_image, global_step=epoch)
 
-        confusion_matrix_dsn_valout += get_confusion_matrix(gt_label = label, pred_label =dsn_valout, class_num = args.num_classes, ignore_label=args.ignore_label)
+            #different approach
+            val_output = model(x=image_resized) 
+            label = label.long().to(device)
+            loss1 = criterion(preds=val_output, target=label)
+            reduce_loss1 = loss1.data
+            val_loss1 = reduce_loss1.item()
+            val_loss_sum1 += val_loss1
+
+            # calculating metrics
+
+
+            # calculating dice for ccnet_out
+            ccnet_valout = val_output[0]
+            ccnet_valout = F.interpolate(input=ccnet_valout, size=(size[0],size[1]), mode='bilinear', align_corners=True)
+            ccnet_valout = np.asarray(np.argmax(ccnet_valout.cpu().detach().numpy(), axis=1), dtype=np.uint8) #(1, 1024, 2048)
+
+            confusion_matrix_ccnet_valout += get_confusion_matrix(gt_label = label, pred_label =ccnet_valout, class_num = args.num_classes, ignore_label=args.ignore_label)
+
+            dsn_valout = val_output[1]
+            dsn_valout = F.interpolate(input=dsn_valout, size=(size[0],size[1]), mode='bilinear', align_corners=True)
+            dsn_valout = np.asarray(np.argmax(dsn_valout.cpu().detach().numpy(), axis=1), dtype=np.uint8) #(1, 1024, 2048)
+
+            confusion_matrix_dsn_valout += get_confusion_matrix(gt_label = label, pred_label =dsn_valout, class_num = args.num_classes, ignore_label=args.ignore_label)
 
 
 
