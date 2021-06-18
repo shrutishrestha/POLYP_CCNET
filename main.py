@@ -82,6 +82,8 @@ def get_parser(config):
                         help="Where restore model parameters from.")
     parser.add_argument("--start-iters", type=int, default=config['training']['start-iters'],
                         help="Number of classes to predict (including background).")
+    parser.add_argument("--continue-training", type=bool, default=config['training']['continue-training'],
+                        help="either to continue training or not")
 
     parser.add_argument("--random-mirror", action="store_true",
                         help="Whether to randomly mirror the inputs during the training.")
@@ -107,8 +109,8 @@ def get_parser(config):
                         help="tensorboard-output path to save image")
     parser.add_argument("--max-epochs", type=int, default=config['training']['max-epochs'],
                         help="maximum epochs")
-    parser.add_argument("--ohem", type=bool, default=True,
-                        help="maximum epochs")
+    parser.add_argument("--ohem", type=bool,default=config['training']['ohem'],
+                        help="ohem true or false")
     parser.add_argument("--ohem-thres", type=float, default=0.7,
                         help="ohem threshold")
     parser.add_argument("--ohem-keep", type=float, default=100000,
@@ -162,14 +164,19 @@ def main(config):
 
         # for model and criterion
         if args.ohem:
+            print("in ohem",args.ohem)
             criterion = CriterionOhemDSN(thresh=args.ohem_thres, min_kept=args.ohem_keep)
         else:
+            print("not ohem",args.ohem)
             criterion = CriterionDSN() 
 
         seg_model = eval('networks.' + args.model + '.Seg_Model')(
             backbone = args.backbone,
-            num_classes=args.num_classes, criterion=criterion,
-            pretrained_model=args.restore_from, recurrence=args.recurrence
+            num_classes=args.num_classes, 
+            continue_training = args.continue_training,
+            criterion=criterion,
+            pretrained_model=args.restore_from, 
+            recurrence=args.recurrence
         )
 
         optimizer = optim.SGD(
@@ -179,7 +186,7 @@ def main(config):
         # initializing models to cuda
         seg_model.to(device)
         model = torch.nn.DataParallel(seg_model)
-
+ 
         # check and making directories
         check_and_make_directories([args.snapshot_dir, args.result_dir])
         check_and_make_files([args.result_file_path], result_file=True)
