@@ -10,3 +10,12 @@ $ export CUDA_VISIBLE_DEVICES=0,1,2,3 </br>
 $ python main.py </br>
 
 
+# change check
+continue or not?
+    continue_training
+    startiters
+learning rate
+ohem or not
+
+dataset folder  
+    and name of resultant files location
