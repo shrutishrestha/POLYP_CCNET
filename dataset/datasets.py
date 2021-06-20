@@ -9,7 +9,9 @@ from engine import Engine
 import matplotlib.pyplot as plt
 import imageio
 import numpy as np
-
+import imgaug as ia
+import imgaug.augmenters as iaa
+from imgaug.augmentables.segmaps import SegmentationMapsOnImage
 
 class KvasirSegDataSet(data.Dataset):
     def __init__(self, data_dir, max_iters=None, crop_size=(769,769), mean=(104.00698793,116.66876762,122.67891434), scale=True,
@@ -63,6 +65,34 @@ class KvasirSegDataSet(data.Dataset):
         #     label_copy[label == k] = v
         label_copy[label!=0] = 1 #edited 
         return label_copy
+    
+    def transform(self,image,label):
+        ia.seed(1)
+
+        sometimes = lambda aug: iaa.Sometimes(0.5, aug)
+        augmentation_for_both = iaa.Sequential(
+        [
+            iaa.Fliplr(0.5), # horizontally flip 50% of all images
+            iaa.Flipud(0.5), # vertically flip 20% of all images
+            iaa.ElasticTransformation(alpha=(0.5, 3.5), sigma=0.25),
+            iaa.Affine(scale=(0.5, 1.6)),
+            iaa.TranslateX(percent=(-0.2, 0.2)),
+            iaa.TranslateY(percent=(-0.3, 0.3)),
+            iaa.Rotate((-90, 90)),
+            iaa.ShearX((-45, 45)),
+            iaa.ShearY((-45, 45))
+            ])
+
+        augmentation_for_image = iaa.Sequential([
+                iaa.LinearContrast((0.2, 1.8), per_channel=0.5),
+                ])
+                
+        image = augmentation_for_image(image = image)
+        segmap = SegmentationMapsOnImage(label, shape=image.shape)
+        image, label = augmentation_for_both(image = image, segmentation_maps=segmap)
+        label = label.get_arr()
+
+        return image,label
 
         
     def __getitem__(self, index):
@@ -78,7 +108,10 @@ class KvasirSegDataSet(data.Dataset):
         if not self.test:
             if self.scale:
                 image, label = self.generate_scale_label(image, label)
+            
             image = np.asarray(image, np.float32)
+            image, label = self.transform(image, label)
+
             image = image - self.mean
             img_h, img_w = label.shape
             pad_h = max(self.crop_h - img_h, 0)
