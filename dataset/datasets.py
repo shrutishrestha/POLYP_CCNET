@@ -83,11 +83,6 @@ class KvasirSegDataSet(data.Dataset):
             iaa.ShearY((-45, 45))
             ])
 
-        augmentation_for_image = iaa.Sequential([
-                iaa.LinearContrast((0.2, 1.8), per_channel=0.5),
-                ])
-                
-        image = augmentation_for_image(image = image)
         segmap = SegmentationMapsOnImage(label, shape=image.shape)
         image, label = augmentation_for_both(image = image, segmentation_maps=segmap)
         label = label.get_arr()

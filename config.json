@@ -27,12 +27,12 @@
         "max-epochs": 300,
         "num-workers": 8,
         "result-dir": "/media/HDD1/Shruti/POLYP_CCNET/training_results",
-        "result-file-path": "/media/HDD1/Shruti/POLYP_CCNET/training_results/769_resnet50_2ccnet_transconv_correct_lr_1e5_dataaug1.csv", 
+        "result-file-path": "/media/HDD1/Shruti/POLYP_CCNET/training_results/769_resnet50_2ccnet_transconv_correct_lr_1e5_dataaug2.csv", 
         "imagenet-mean": "104.00698793,116.66876762,122.67891434",
-        "tensorboard-output": "/media/HDD1/Shruti/POLYP_CCNET/tensorboard/runs/769_resnet50_2ccnet_transconv_correct_lr_1e5_dataaug1", 
-        "snapshot-dir": "/media/HDD1/Shruti/POLYP_CCNET/snapshots/769_resnet50_2ccnet_transconv_correct_lr_1e5_dataaug1",
-        "best-checkpoint-fpath": "/media/HDD1/Shruti/POLYP_CCNET/snapshots/769_resnet50_2ccnet_transconv_correct_lr_1e5_dataaug1/best_checkpoint.pth", 
-        "current-checkpoint-fpath": "/media/HDD1/Shruti/POLYP_CCNET/snapshots/769_resnet50_2ccnet_transconv_correct_lr_1e5_dataaug1/current_checkpoint.pth"
+        "tensorboard-output": "/media/HDD1/Shruti/POLYP_CCNET/tensorboard/runs/769_resnet50_2ccnet_transconv_correct_lr_1e5_dataaug2", 
+        "snapshot-dir": "/media/HDD1/Shruti/POLYP_CCNET/snapshots/769_resnet50_2ccnet_transconv_correct_lr_1e5_dataaug2",
+        "best-checkpoint-fpath": "/media/HDD1/Shruti/POLYP_CCNET/snapshots/769_resnet50_2ccnet_transconv_correct_lr_1e5_dataaug2/best_checkpoint.pth", 
+        "current-checkpoint-fpath": "/media/HDD1/Shruti/POLYP_CCNET/snapshots/769_resnet50_2ccnet_transconv_correct_lr_1e5_dataaug2/current_checkpoint.pth"
     },
     "evaluation": {
         "test-batch-size": 1,
