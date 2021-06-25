@@ -12,6 +12,8 @@ import numpy as np
 import imgaug as ia
 import imgaug.augmenters as iaa
 from imgaug.augmentables.segmaps import SegmentationMapsOnImage
+from PIL import Image
+
 
 class KvasirSegDataSet(data.Dataset):
     def __init__(self, data_dir, max_iters=None, crop_size=(769,769), mean=(104.00698793,116.66876762,122.67891434), scale=True,
@@ -94,18 +96,24 @@ class KvasirSegDataSet(data.Dataset):
 
         datafiles = self.files[index]
         name = datafiles["name"]
-        image = cv2.imread(datafiles["img"], cv2.IMREAD_COLOR)
+        # image = cv2.imread(datafiles["img"], cv2.IMREAD_COLOR)
+
+        image = Image.open(datafiles["img"])
+        image = np.asarray(image)
+
         label = cv2.imread(datafiles["label"], cv2.IMREAD_GRAYSCALE)
         label = self.id2trainId(label)
-        
         size = image.shape
         
         if not self.test:
             if self.scale:
                 image, label = self.generate_scale_label(image, label)
-            
+
             image = np.asarray(image, np.float32)
-            image, label = self.transform(image, label)
+
+            # image, label = self.transform(image, label)
+
+            ori_img = image
 
             image = image - self.mean
             img_h, img_w = label.shape
@@ -118,23 +126,31 @@ class KvasirSegDataSet(data.Dataset):
                 label_pad = cv2.copyMakeBorder(label, 0, pad_h, 0, 
                     pad_w, cv2.BORDER_CONSTANT,
                     value=(self.ignore_label,))
+
+                ori_img = cv2.copyMakeBorder(ori_img, 0, pad_h, 0, 
+                    pad_w, cv2.BORDER_CONSTANT, 
+                    value=(0.0, 0.0, 0.0))
             else:
                 img_pad, label_pad = image, label
-
             img_h, img_w = label_pad.shape
             h_off = random.randint(0, img_h - self.crop_h)
             w_off = random.randint(0, img_w - self.crop_w)
             # roi = cv2.Rect(w_off, h_off, self.crop_w, self.crop_h);
+
             image = np.asarray(img_pad[h_off : h_off+self.crop_h, w_off : w_off+self.crop_w], np.float32)
             label = np.asarray(label_pad[h_off : h_off+self.crop_h, w_off : w_off+self.crop_w], np.float32)
+            ori_img = np.asarray(ori_img[h_off : h_off+self.crop_h, w_off : w_off+self.crop_w], np.float32)
+
             #image = image[:, :, ::-1]  # change to BGR
             image = image.transpose((2, 0, 1))
-            if self.is_mirror:
-                flip = np.random.choice(2) * 2 - 1
-                image = image[:, :, ::flip]
-                label = label[:, ::flip]
+            ori_img = ori_img.transpose((2, 0, 1))
 
-            return image.copy(), label.copy(), np.array(size), name
+            # if self.is_mirror:
+            #     flip = np.random.choice(2) * 2 - 1
+            #     image = image[:, :, ::flip]
+            #     label = label[:, ::flip]
+            
+            return ori_img.copy(), image.copy(), label.copy(), np.array(size), name
 
         else:
 
