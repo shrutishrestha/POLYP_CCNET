@@ -4,6 +4,7 @@ from PIL import Image
 import os
 import cv2
 import torch
+import imageio
 
 
 def get_val_merged_image(original_image_path, label, pred_mask):
@@ -59,11 +60,17 @@ def get_val_merged_image(original_image_path, label, pred_mask):
     return new_im_tensor
 
 
-def get_train_merged_image(image, label, pred_mask):
+def get_train_merged_image(ori_img, image, label, pred_mask):
     if torch.is_tensor(image):
         image = image.cpu().numpy()
+    if torch.is_tensor(ori_img):
+        ori_img = ori_img.cpu().numpy()
+
     image = np.asarray(image.transpose((1,2,0)), np.uint8)
+    ori_img = np.asarray(ori_img.transpose((1,2,0)), np.uint8)
+
     image = Image.fromarray(image)
+    ori_img = Image.fromarray(ori_img)
 
     label = label.cpu().numpy()
     label_copy = label.copy()
@@ -80,12 +87,18 @@ def get_train_merged_image(image, label, pred_mask):
     pred_mask_copy[pred_mask == 1] =255
     pred_mask = Image.fromarray(pred_mask_copy) 
 
-    total_width = image.size[0]+10+label.size[0] + 10+pred_mask.size[0]
+    total_width = image.size[0]+10+image.size[0]+10+label.size[0] + 10+pred_mask.size[0]
     max_height = max(image.size[1], label.size[1], pred_mask.size[1])
     boader = 255 * np.ones((max_height,max_height))
     boader = Image.fromarray(boader) 
     new_im = Image.new('RGB', (total_width, max_height))
     x_offset = 0
+    new_im.paste(ori_img, (x_offset,0))
+    x_offset += image.size[0]
+
+    #border
+    new_im.paste(boader, (x_offset,0))
+    x_offset += 10
     new_im.paste(image, (x_offset,0))
     x_offset += image.size[0]
 
