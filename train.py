@@ -45,8 +45,7 @@ def train_method(epoch, args, criterion, engine, global_iteration, model, optimi
 
         global_iteration += 1
 
-        train_images, train_labels, _, name = train_loader_iterator.next()
-
+        ori_img_pad, train_images, train_labels, _, name = train_loader_iterator.next()
         train_images = train_images.to(device)
         train_labels = train_labels.long().to(device)
 
@@ -80,9 +79,8 @@ def train_method(epoch, args, criterion, engine, global_iteration, model, optimi
 
         print_str = ' Iter{}/{}:'.format(idx + 1, len(
             train_loader)) + ' lr=%.2e' % lr + ' loss=%.2f' % reduce_loss.item()
-        
 
-        merged_image = get_train_merged_image(train_images[0], train_labels[0], ccnet_out[0])
+        merged_image = get_train_merged_image(ori_img_pad[0], train_images[0], train_labels[0], ccnet_out[0])
 
         if idx==100:
             summary_writer.add_image(tag="train_"+name[0], img_tensor = merged_image, global_step=epoch)
