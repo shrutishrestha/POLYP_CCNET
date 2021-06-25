@@ -208,7 +208,7 @@ class ResNet(nn.Module):
         x_maxpool = self.maxpool(x_input) #2, 128, 129, 129
 
         x1 = self.layer1(x_maxpool) #[2, 256, 129, 129
-        x_head1 = self.head1(x1, self.recurrence) #[2, 64, 129, 129]
+        # x_head1 = self.head1(x1, self.recurrence) #[2, 64, 129, 129]
 
         x2 = self.layer2(x1) #[2, 512, 97, 97])
 
@@ -240,10 +240,12 @@ class ResNet(nn.Module):
 
         x_upsampled_dsn =  self.conv_reduce_3_2(x_inv_cat)
 
-        ccnet_head1 = F.interpolate(input=x_head1, size=(769, 769), mode='bilinear', align_corners=True)
+        # ccnet_head1 = F.interpolate(input=x_head1, size=(769, 769), mode='bilinear', align_corners=True)
         ccnet_head = F.interpolate(input=x_head, size=(769, 769), mode='bilinear', align_corners=True)
 
-        ccnet_out = ccnet_head1 + ccnet_head
+        # ccnet_out = ccnet_head1 + ccnet_head
+        ccnet_out = ccnet_head
+
 
         outs = [ccnet_out, x_upsampled_dsn]
 
