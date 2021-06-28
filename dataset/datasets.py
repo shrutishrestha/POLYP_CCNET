@@ -54,11 +54,12 @@ class KvasirSegDataSet(data.Dataset):
         return len(self.files)
 
 
-    def generate_scale_label(self, image, label):
+    def generate_scale_label(self, ori_image, image, label):
         f_scale = 0.7 + random.randint(0,14) / 10.0
+        ori_image = cv2.resize(ori_image, None, fx = f_scale, fy = f_scale, interpolation = cv2.INTER_LINEAR)
         image = cv2.resize(image, None, fx = f_scale, fy = f_scale, interpolation = cv2.INTER_LINEAR)
         label = cv2.resize(label, None, fx = f_scale, fy = f_scale, interpolation= cv2.INTER_NEAREST)
-        return image, label
+        return ori_image, image, label
 
 
     def id2trainId(self, label):
@@ -96,10 +97,10 @@ class KvasirSegDataSet(data.Dataset):
 
         datafiles = self.files[index]
         name = datafiles["name"]
-        # image = cv2.imread(datafiles["img"], cv2.IMREAD_COLOR)
+        image = cv2.imread(datafiles["img"], cv2.IMREAD_COLOR)
 
-        image = Image.open(datafiles["img"])
-        image = np.asarray(image)
+        ori_image = Image.open(datafiles["img"])
+        ori_image = np.asarray(ori_image)
 
         label = cv2.imread(datafiles["label"], cv2.IMREAD_GRAYSCALE)
         label = self.id2trainId(label)
@@ -107,13 +108,12 @@ class KvasirSegDataSet(data.Dataset):
         
         if not self.test:
             if self.scale:
-                image, label = self.generate_scale_label(image, label)
+                ori_image, image, label = self.generate_scale_label(ori_image, image, label)
 
             image = np.asarray(image, np.float32)
 
             # image, label = self.transform(image, label)
 
-            ori_img = image
 
             image = image - self.mean
             img_h, img_w = label.shape
@@ -127,7 +127,7 @@ class KvasirSegDataSet(data.Dataset):
                     pad_w, cv2.BORDER_CONSTANT,
                     value=(self.ignore_label,))
 
-                ori_img = cv2.copyMakeBorder(ori_img, 0, pad_h, 0, 
+                ori_image = cv2.copyMakeBorder(ori_image, 0, pad_h, 0, 
                     pad_w, cv2.BORDER_CONSTANT, 
                     value=(0.0, 0.0, 0.0))
             else:
@@ -139,18 +139,18 @@ class KvasirSegDataSet(data.Dataset):
 
             image = np.asarray(img_pad[h_off : h_off+self.crop_h, w_off : w_off+self.crop_w], np.float32)
             label = np.asarray(label_pad[h_off : h_off+self.crop_h, w_off : w_off+self.crop_w], np.float32)
-            ori_img = np.asarray(ori_img[h_off : h_off+self.crop_h, w_off : w_off+self.crop_w], np.float32)
+            ori_image = np.asarray(ori_image[h_off : h_off+self.crop_h, w_off : w_off+self.crop_w], np.float32)
 
             #image = image[:, :, ::-1]  # change to BGR
             image = image.transpose((2, 0, 1))
-            ori_img = ori_img.transpose((2, 0, 1))
+            ori_image = ori_image.transpose((2, 0, 1))
 
             # if self.is_mirror:
             #     flip = np.random.choice(2) * 2 - 1
             #     image = image[:, :, ::flip]
             #     label = label[:, ::flip]
             
-            return ori_img.copy(), image.copy(), label.copy(), np.array(size), name
+            return ori_image.copy(), image.copy(), label.copy(), np.array(size), name
 
         else:
 
