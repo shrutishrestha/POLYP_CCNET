@@ -152,13 +152,13 @@ class ResNet(nn.Module):
 
         self.inv_128_64 = nn.ConvTranspose2d(128,64,kernel_size=3,stride=2,padding=1)
         self.bn64_input = nn.BatchNorm2d(64,track_running_stats=False)
-        self.conv_reduce_64_1 = nn.Conv2d(64,1,stride=1,kernel_size=1)
+        self.conv_reduce_64_2 = nn.Conv2d(64,2,stride=1,kernel_size=1)
 
         self.inv_256_128_x1 = nn.ConvTranspose2d(256,128, kernel_size=3,stride=2, padding=1)
         self.bn128_x1 = nn.BatchNorm2d(128,track_running_stats=False)
         self.inv_128_64_x1 = nn.ConvTranspose2d(128,64,kernel_size=3,stride=2,padding=1)
         self.bn64_x1= nn.BatchNorm2d(64,track_running_stats=False)
-        self.conv_reduce_64_1_x1 = nn.Conv2d(64,1,stride=1,kernel_size=1)
+        self.conv_reduce_64_2_x1 = nn.Conv2d(64,2,stride=1,kernel_size=1)
 
         self.inv_2048_1024_x4 = nn.ConvTranspose2d(2048,1024,kernel_size=3,stride=2,padding=1)
         self.inv_1024_512_x4 = nn.ConvTranspose2d(1024,512,kernel_size=3,stride=2,padding=2)
@@ -168,7 +168,7 @@ class ResNet(nn.Module):
         self.bn512_x4 = nn.BatchNorm2d(512,track_running_stats=False)
         self.bn256_x4 = nn.BatchNorm2d(256,track_running_stats=False)
 
-        self.conv_reduce_256_1_x4 = nn.Conv2d(256,1,stride=1,kernel_size=1)
+        self.conv_reduce_256_2_x4 = nn.Conv2d(256,2,stride=1,kernel_size=1)
 
         self.conv_reduce_3_2 = nn.Conv2d(3,2,stride=1,kernel_size=1)
 
@@ -220,32 +220,26 @@ class ResNet(nn.Module):
 
         x_head = self.head(x4, self.recurrence) #[2, 2, 97, 97]
 
-        #xinput
+        # xinput
         xinput_inv = self.relu(self.bn64_input(self.inv_128_64(x_input, output_size=(769,769))))  #x_input 2, 128, 385, 385
-        xinput_inv = self.conv_reduce_64_1(xinput_inv) 
+        xinput_inv = self.conv_reduce_64_2(xinput_inv) 
 
         # #x1
         x1_inv = self.relu(self.bn128_x1(self.inv_256_128_x1(x1,output_size=(385,385)))) #x1 [2, 256, 193, 193]
         x1_inv = self.relu(self.bn64_x1(self.inv_128_64_x1(x1_inv, output_size=(769,769)))) 
-        x1_inv = self.conv_reduce_64_1_x1(x1_inv)  
+        x1_inv = self.conv_reduce_64_2_x1(x1_inv)  
 
         # #x4
-        
         x4_inv = self.relu(self.bn1024_x4(self.inv_2048_1024_x4(x4,output_size=(194,194)))) #x4 [2, 2048, 97, 97]
         x4_inv = self.relu(self.bn512_x4(self.inv_1024_512_x4(x4_inv,output_size=(385,385)))) 
         x4_inv = self.relu(self.bn256_x4(self.inv_512_256_x4(x4_inv, output_size=(769,769)))) 
-        x4_inv = self.conv_reduce_256_1_x4(x4_inv) 
+        x4_inv = self.conv_reduce_256_2_x4(x4_inv) 
 
-        x_inv_cat = torch.cat([xinput_inv, x1_inv, x4_inv], 1)
+        x_upsampled_dsn = xinput_inv + x1_inv + x4_inv
 
-        x_upsampled_dsn =  self.conv_reduce_3_2(x_inv_cat)
-
-        # ccnet_head1 = F.interpolate(input=x_head1, size=(769, 769), mode='bilinear', align_corners=True)
         ccnet_head = F.interpolate(input=x_head, size=(769, 769), mode='bilinear', align_corners=True)
 
-        # ccnet_out = ccnet_head1 + ccnet_head
         ccnet_out = ccnet_head
-
 
         outs = [ccnet_out, x_upsampled_dsn]
 
