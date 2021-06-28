@@ -220,28 +220,10 @@ class ResNet(nn.Module):
 
         x_head = self.head(x4, self.recurrence) #[2, 2, 97, 97]
 
-        # xinput
-        xinput_inv = self.relu(self.bn64_input(self.inv_128_64(x_input, output_size=(769,769))))  #x_input 2, 128, 385, 385
-        xinput_inv = self.conv_reduce_64_2(xinput_inv) 
-
-        # #x1
-        x1_inv = self.relu(self.bn128_x1(self.inv_256_128_x1(x1,output_size=(385,385)))) #x1 [2, 256, 193, 193]
-        x1_inv = self.relu(self.bn64_x1(self.inv_128_64_x1(x1_inv, output_size=(769,769)))) 
-        x1_inv = self.conv_reduce_64_2_x1(x1_inv)  
-
-        # #x4
-        x4_inv = self.relu(self.bn1024_x4(self.inv_2048_1024_x4(x4,output_size=(194,194)))) #x4 [2, 2048, 97, 97]
-        x4_inv = self.relu(self.bn512_x4(self.inv_1024_512_x4(x4_inv,output_size=(385,385)))) 
-        x4_inv = self.relu(self.bn256_x4(self.inv_512_256_x4(x4_inv, output_size=(769,769)))) 
-        x4_inv = self.conv_reduce_256_2_x4(x4_inv) 
-
-        x_upsampled_dsn = xinput_inv + x1_inv + x4_inv
-
         ccnet_head = F.interpolate(input=x_head, size=(769, 769), mode='bilinear', align_corners=True)
+        x_dsn = F.interpolate(input=x_dsn, size=(769, 769), mode='bilinear', align_corners=True)
 
-        ccnet_out = ccnet_head
-
-        outs = [ccnet_out, x_upsampled_dsn]
+        outs = [ccnet_head, x_dsn]
 
         return outs
 
