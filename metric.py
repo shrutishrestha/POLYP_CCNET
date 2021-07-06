@@ -36,28 +36,12 @@ def get_confusion_matrix(gt_label, pred_label, class_num, ignore_label): #seg_gt
 
         return confusion_matrix
 
-def calculate_metrics(confusion_matrix):
-    tn, fp, fn, tp = expand_confusion_matrix(confusion_matrix)
-    dice = dice_coef(tn, fp, fn, tp)
-    meanIU = mean_IU(confusion_matrix)
-    prec = precision(tn, fp, fn, tp)
-    rec = recall(tn, fp, fn, tp)
-    return tn, fp, fn, tp, meanIU, dice, prec, rec
-
 
 def precision(tn, fp, fn, tp):
     return tp/(tp+fp)
 
 def recall(tn, fp, fn, tp):
     return tp/(tp+fn)
-
-
-def expand_confusion_matrix(confusion_matrix):
-    tn = confusion_matrix[0][0]
-    fp = confusion_matrix[0][1]
-    fn = confusion_matrix[1][0]
-    tp = confusion_matrix[1][1]
-    return tn, fp, fn, tp
 
 
 def dice_coef(tn, fp, fn, tp, smooth=0.000001, activation = 'sigmoid'):
@@ -67,6 +51,21 @@ def dice_coef(tn, fp, fn, tp, smooth=0.000001, activation = 'sigmoid'):
     dice = 2*tp / ((tp+fp)+(tp+fn)+smooth)
     return dice
 
+def calculate_metrics(confusion_matrix):
+    tn, fp, fn, tp = expand_confusion_matrix(confusion_matrix)
+    dice = dice_coef(tn, fp, fn, tp)
+    meanIU = mean_IU(confusion_matrix)
+    prec = precision(tn, fp, fn, tp)
+    rec = recall(tn, fp, fn, tp)
+    return tn, fp, fn, tp, meanIU, dice, prec, rec
+
+#---------------------------------------------------------------------------------------------------#
+def expand_confusion_matrix(confusion_matrix):
+    tn = confusion_matrix[0][0]
+    fp = confusion_matrix[0][1]
+    fn = confusion_matrix[1][0]
+    tp = confusion_matrix[1][1]
+    return tn, fp, fn, tp, meanIU
 
 def mean_IU(confusion_matrix):
     pos = confusion_matrix.sum(1) # actual no actual yes
@@ -82,4 +81,36 @@ def mean_IU(confusion_matrix):
     return mean_IU
 
 
+def cut_and_form_original(y_true, y_pred):
+    y_pred = y_pred.flatten()
+    if torch.is_tensor(y_true) == True:
+        y_true = y_true.cpu().detach().numpy()
+
+    y_true = y_true.flatten()
+
+    valid_flag = y_true != ignore_label
+
+    valid_inds = np.where(valid_flag)[0]
+
+    y_pred = y_pred[valid_flag]
+    y_true = y_true[valid_flag]
+    return y_true, y_pred
+
+
+def dice_score(y_true, y_pred):
+    return (2 * (y_true * y_pred).sum() + 1e-15) / (y_true.sum() + y_pred.sum() + 1e-15)
+
+
+def jac_score(y_true, y_pred):
+    intersection = (y_true * y_pred).sum()
+    union = y_true.sum() + y_pred.sum() - intersection
+    return (intersection + 1e-15) / (union + 1e-15)
+
+def precision_score(y_true, y_pred):
+    intersection = (y_true * y_pred).sum()
+    return (intersection + 1e-15) / (y_pred.sum() + 1e-15)
+    
+def recall_score(y_true, y_pred):
+    intersection = (y_true * y_pred).sum()
+    return (intersection + 1e-15) / (y_true.sum() + 1e-15)
 
