@@ -6,6 +6,7 @@ certifi==2020.12.5
 chardet==4.0.0
 cycler==0.10.0
 decorator==4.4.2
+efficientnet-pytorch==0.6.3
 flatbuffers==1.12
 future==0.18.2
 gast==0.3.3
@@ -26,6 +27,7 @@ kiwisolver==1.3.1
 Markdown==3.3.4
 matplotlib==3.3.4
 memory-profiler==0.58.0
+munch==2.5.0
 networkx==2.5
 numpy==1.19.5
 oauthlib==3.1.0
@@ -36,6 +38,7 @@ opt-einsum==3.3.0
 Pillow==8.1.0
 pipdeptree==2.0.0
 pkg-resources==0.0.0
+pretrainedmodels==0.7.4
 protobuf==3.14.0
 psutil==5.8.0
 ptflops==0.6.5
@@ -50,6 +53,7 @@ requests-oauthlib==1.3.0
 rsa==4.7.2
 scikit-image==0.17.2
 scipy==1.5.4
+segmentation-models-pytorch @ git+https://github.com/qubvel/segmentation_models.pytorch@a6e1123983548be55d4d1320e0a2f5fd9174d4ac
 Shapely==1.7.1
 six==1.15.0
 tabulate==0.8.9
@@ -62,6 +66,7 @@ tensorflow==2.4.1
 tensorflow-estimator==2.4.0
 termcolor==1.1.0
 tifffile==2020.9.3
+timm==0.3.2
 torch==1.2.0
 torchvision==0.4.0
 tqdm==4.56.0
