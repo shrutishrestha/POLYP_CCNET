@@ -23,7 +23,7 @@ from PIL import Image as PILImage
 from utils.pyt_utils import load_model
 from utils.image_utils import get_val_merged_image
 from engine import Engine
-from metric import get_confusion_matrix,calculate_metrics
+from metric import get_confusion_matrix,calculate_metrics, cut_and_form_original, dice_score, jac_score, precision_score, recall_score
 
 IMG_MEAN = np.array((104.00698793,116.66876762,122.67891434), dtype=np.float32)
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -143,6 +143,10 @@ def validation_method(epoch, args, model, test_loader, criterion, summary_writer
     dataloader = iter(test_loader)
     val_loss_sum = 0
     val_loss_sum1 = 0
+    dice_value = 0
+    iou_value = 0
+    precision = 0
+    recall = 0
     with torch.no_grad():
         for idx in pbar:
 
@@ -180,6 +184,13 @@ def validation_method(epoch, args, model, test_loader, criterion, summary_writer
 
             summary_writer.add_image(tag="eval_"+name[0], img_tensor = merged_image, global_step=epoch)
 
+            # calculating metrics
+            val_output, seg_pred = cut_and_form_original(y_true=label, y_pred=seg_pred, ignore_label = args.ignore_label)
+            dice_value += dice_score(y_true=val_output, y_pred=seg_pred)
+            iou_value += jac_score(y_true=val_output, y_pred=seg_pred)
+            precision += precision_score(y_true=val_output, y_pred=seg_pred)
+            recall += recall_score(y_true=val_output, y_pred=seg_pred)
+
             #different approach
             val_output = model(x=image_resized) 
             label = label.long().to(device)
@@ -188,7 +199,6 @@ def validation_method(epoch, args, model, test_loader, criterion, summary_writer
             val_loss1 = reduce_loss1.item()
             val_loss_sum1 += val_loss1
 
-            # calculating metrics
 
 
             # calculating dice for ccnet_out
@@ -209,7 +219,7 @@ def validation_method(epoch, args, model, test_loader, criterion, summary_writer
 
     #for metric
 
-    tn, fp, fn, tp, meanIU, dice, prec, recall = calculate_metrics(confusion_matrix)
+    tn, fp, fn, tp, meanIU, dice, prec, rec = calculate_metrics(confusion_matrix)
     tn_ccnet, fp_ccnet, fn_ccnet, tp_ccnet, meanIU_ccnet, dice_ccnet, prec_ccnet, recall_ccnet = calculate_metrics(confusion_matrix_ccnet_valout)
     tn_dsn, fp_dsn, fn_dsn, tp_dsn, meanIU_dsn, dice_dsn, prec_dsn, recall_dsn = calculate_metrics(confusion_matrix_dsn_valout)
 
@@ -221,9 +231,9 @@ def validation_method(epoch, args, model, test_loader, criterion, summary_writer
                     "fp": fp,
                     "fn": fn,
                     "tp": tp,
-                    "meanIU": meanIU,
-                    "dice" : dice,
-                    "precision": prec,
+                    "meanIU": iou_value,
+                    "dice" : dice_value,
+                    "precision": precision,
                     "recall": recall}
 
     val_ccnet_metric = {    "tn": tn_ccnet,

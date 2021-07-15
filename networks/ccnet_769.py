@@ -208,7 +208,7 @@ class ResNet(nn.Module):
         x_maxpool = self.maxpool(x_input) #2, 128, 129, 129
 
         x1 = self.layer1(x_maxpool) #[2, 256, 129, 129
-        # x_head1 = self.head1(x1, self.recurrence) #[2, 64, 129, 129]
+        x_head1 = self.head1(x1, self.recurrence) #[2, 64, 129, 129]
 
         x2 = self.layer2(x1) #[2, 512, 97, 97])
 
@@ -238,6 +238,7 @@ class ResNet(nn.Module):
         x_upsampled_dsn = xinput_inv + x1_inv + x4_inv
 
         ccnet_head = F.interpolate(input=x_head, size=(769, 769), mode='bilinear', align_corners=True)
+        ccnet_head1 = F.interpolate(input=x_head1, size=(769, 769), mode='bilinear', align_corners=True)
 
         ccnet_out = ccnet_head
 
@@ -251,6 +252,7 @@ def Seg_Model(backbone, num_classes, continue_training, criterion, pretrained_mo
         model = ResNet(Bottleneck,[3, 4, 6, 3], num_classes, criterion, recurrence)
 
         if pretrained_model is not None:
+            print("training model not none")
             model = load_model(model, pretrained_model)
     else:
         print("starting model state")
