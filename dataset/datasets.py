@@ -17,7 +17,7 @@ from PIL import Image
 
 class KvasirSegDataSet(data.Dataset):
     def __init__(self, data_dir, max_iters=None, crop_size=(769,769), mean=(104.00698793,116.66876762,122.67891434), scale=True,
-                 mirror=True, ignore_label=1, cutmix = True, test=False):
+                 mirror=True, ignore_label=1, cutmix = True, test=False, data_aug=False):
         self.data_dir = data_dir
         self.crop_h, self.crop_w = crop_size
         self.scale = scale
@@ -28,6 +28,7 @@ class KvasirSegDataSet(data.Dataset):
         self.files = []
         self.cutmix = cutmix
         self.test = test
+        self.data_aug = data_aug
 
         for item in self.img_ids:
             image_path, label_path = item
@@ -70,27 +71,22 @@ class KvasirSegDataSet(data.Dataset):
         return label_copy
     
     def transform(self,image,label):
-        ia.seed(1)
+            ia.seed(1)
+            sometimes = lambda aug: iaa.Sometimes(0.5, aug)
+            augmentation_for_both = iaa.Sequential(
+            [
+                iaa.Fliplr(0.5), # horizontally flip 50% of all images
+                iaa.Flipud(0.5), # vertically flip 20% of all images
+                iaa.Sometimes(
+                    0.5,
+                    iaa.Affine(scale=(0.5, 2.0))
+                )])
 
-        sometimes = lambda aug: iaa.Sometimes(0.5, aug)
-        augmentation_for_both = iaa.Sequential(
-        [
-            iaa.Fliplr(0.5), # horizontally flip 50% of all images
-            iaa.Flipud(0.5), # vertically flip 20% of all images
-            iaa.ElasticTransformation(alpha=(0.5, 3.5), sigma=0.25),
-            iaa.Affine(scale=(0.5, 1.6)),
-            iaa.TranslateX(percent=(-0.2, 0.2)),
-            iaa.TranslateY(percent=(-0.3, 0.3)),
-            iaa.Rotate((-90, 90)),
-            iaa.ShearX((-45, 45)),
-            iaa.ShearY((-45, 45))
-            ])
+            segmap = SegmentationMapsOnImage(label, shape=image.shape)
+            image, label = augmentation_for_both(image = image, segmentation_maps=segmap)
+            label = label.get_arr()
 
-        segmap = SegmentationMapsOnImage(label, shape=image.shape)
-        image, label = augmentation_for_both(image = image, segmentation_maps=segmap)
-        label = label.get_arr()
-
-        return image,label
+            return image,label
 
         
     def __getitem__(self, index):
@@ -111,9 +107,8 @@ class KvasirSegDataSet(data.Dataset):
                 ori_image, image, label = self.generate_scale_label(ori_image, image, label)
 
             image = np.asarray(image, np.float32)
-
-            # image, label = self.transform(image, label)
-
+            if self.data_aug:
+                image, label = self.transform(image, label)
 
             image = image - self.mean
             img_h, img_w = label.shape

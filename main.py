@@ -11,6 +11,7 @@ import torch.optim as optim
 import scipy.misc
 import torch.distributed as dist
 import torch.backends.cudnn as cudnn
+from dataset.datasets import KvasirSegDataSet
 import sys
 import torchvision
 import os
@@ -18,7 +19,7 @@ import shutil
 from tqdm import tqdm
 import os.path as osp
 import networks
-from dataset.datasets import KvasirSegDataSet
+
 from torch.utils.tensorboard import SummaryWriter
 from PIL import Image
 from torch.nn import functional as F
@@ -93,6 +94,9 @@ def get_parser(config):
                         help="choose gpu device.")
     parser.add_argument("--model", type=str, default=config['training']['model'],
                         help="choose model.")
+    parser.add_argument("--data-aug", type=str, default=config['training']['data-aug'],
+                        help="boolean if data aug is to be done or not")
+
     parser.add_argument("--recurrence", type=int, default=config['training']['recurrence'],
                         help="choose the number of recurrence.")
     parser.add_argument("--not-restore-last", action="store_true",
@@ -119,7 +123,7 @@ def get_parser(config):
 
     parser.add_argument("--test-data-path", type=str, default=config['evaluation']['test-data-path'],
                         help="testing data path")
-    parser.add_argument("--Output", type=str, default="/Users/shruti/NAAMIIProjects/CCNet-Polyp-data_aug",
+    parser.add_argument("--Output", type=str, default="/Users/shruti/NAAMIIProjects/CCNet-Polyp",
                         help="testing data path")
     parser.add_argument("--test-batch-size", type=int, default=config['training']['test-batch-size'],
                         help="Number of test images sent to the network in one step.")
@@ -146,7 +150,7 @@ def main(config):
 
     with Engine(custom_parser=parser) as engine:
         args = parser.parse_args()
-        
+
         summary_writer = SummaryWriter(args.tensorboard_output)
 
         cudnn.benchmark = True
@@ -276,7 +280,7 @@ def get_data_loaders(args, engine):
 
     traindataset = KvasirSegDataSet(data_dir=args.train_data_path, max_iters=None, crop_size=input_size,
                                     scale=args.random_scale, mirror=args.random_mirror, mean=IMG_MEAN,
-                                    ignore_label=args.ignore_label, test=False)  
+                                    ignore_label=args.ignore_label, test=False, data_aug=args.data_aug)  
     testdataset = KvasirSegDataSet(data_dir=args.test_data_path, crop_size=input_size, mean=IMG_MEAN, scale=False, mirror=False, test=True)
     # for loaders
     train_loader, train_sampler = engine.get_train_loader(traindataset)
