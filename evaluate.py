@@ -216,7 +216,6 @@ def validation_method(epoch, args, model, test_loader, criterion, summary_writer
 
 
 
-
     #for metric
 
     tn, fp, fn, tp, meanIU, dice, prec, rec = calculate_metrics(confusion_matrix)
